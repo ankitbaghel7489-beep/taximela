@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "source": "cloud-functions",
+    "runtime": "nodejs20"
+  },
+  "hosting": {
+    "public": ".",
+    "ignore": ["firebase.json", "README.md", "node_modules/**", ".git/**"],
+    "cleanUrls": true,
+    "trailingSlash": false
+  }
+}
