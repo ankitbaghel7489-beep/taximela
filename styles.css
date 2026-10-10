@@ -1,0 +1,83 @@
+
+:root{
+  --yellow:#ffcc00; --yellow2:#ffb800; --ink:#08090d; --ink2:#12151d;
+  --white:#fff; --muted:#6f7480; --line:#e9ebef; --soft:#f6f7f9;
+  --radius:22px; --shadow:0 24px 70px rgba(0,0,0,.30);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111;background:#fff}
+a{text-decoration:none;color:inherit}
+button,input,select{font:inherit}
+.nav{position:fixed;top:0;left:0;right:0;z-index:20;height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;color:#fff;background:linear-gradient(180deg,rgba(0,0,0,.58),transparent);transition:.25s}
+.nav.scrolled{background:rgba(7,8,12,.92);backdrop-filter:blur(14px)}
+.logo{font-weight:950;letter-spacing:-1.8px;font-size:26px}.logo b{color:var(--yellow)}
+.navlinks{display:flex;gap:26px;font-size:14px;font-weight:700}.navlinks a{opacity:.88}.navlinks a:hover{color:var(--yellow)}
+.navbtn{background:var(--yellow);color:#111;padding:12px 18px;border-radius:999px;font-weight:850}
+.menu{display:none;background:none;border:0;color:#fff;font-size:28px}
+.hero{min-height:760px;position:relative;background:#090b10 url("assets/home-hero-v2.jpg") center/cover no-repeat;overflow:hidden}
+.hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,5,8,.80) 0%,rgba(3,5,8,.54) 32%,rgba(3,5,8,.08) 68%,rgba(3,5,8,.10));}
+.hero-inner{position:relative;z-index:2;min-height:760px;max-width:1250px;margin:auto;padding:150px 5vw 90px;display:flex;align-items:center}
+.hero-copy{width:44%;color:#fff}.eyebrow{display:inline-flex;gap:8px;align-items:center;color:#111;background:var(--yellow);padding:7px 11px;border-radius:999px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+.hero h1{font-size:clamp(42px,5.4vw,76px);line-height:.98;letter-spacing:-.055em;margin:16px 0 18px}.hero h1 span{color:var(--yellow)}
+.hero p{font-size:17px;line-height:1.65;color:rgba(255,255,255,.82);max-width:570px}.hero-actions{display:flex;gap:12px;margin-top:28px}.btn{border:0;border-radius:14px;padding:14px 20px;font-weight:850;cursor:pointer}.btn-primary{background:var(--yellow);color:#111}.btn-ghost{border:1px solid rgba(255,255,255,.35);color:#fff;background:rgba(255,255,255,.08);backdrop-filter:blur(8px)}
+.booking-card{position:absolute;z-index:4;left:5vw;top:145px;width:min(400px,42vw);background:rgba(255,255,255,.97);border-radius:24px;box-shadow:var(--shadow);overflow:hidden;color:#111}
+.booking-card.shifted{top:158px}
+.card-head{background:linear-gradient(135deg,#ffcc00,#ffb900);padding:17px 20px;text-align:center;font-weight:900;font-size:18px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;padding:10px 12px 0;gap:8px}.tab{border:0;background:#fff;padding:12px;border-radius:13px;font-weight:800;color:#333;cursor:pointer}.tab.active{background:var(--yellow)}
+.subtabs{display:flex;gap:22px;padding:8px 20px 2px;font-size:13px;font-weight:750}.radio{display:flex;align-items:center;gap:8px;cursor:pointer}.radio i{width:14px;height:14px;border-radius:50%;border:2px solid #d4a900;display:inline-block}.radio.active i{background:var(--yellow);box-shadow:inset 0 0 0 3px #fff}
+.form{padding:8px 18px 18px}.field{position:relative;margin-top:9px}.field input,.field select{width:100%;height:47px;border:1px solid #e2e4e9;background:#fbfbfc;border-radius:12px;padding:0 14px;outline:0;color:#222}.field input:focus,.field select:focus{border-color:#d7ad00;box-shadow:0 0 0 3px rgba(255,204,0,.16)}.field .icon{position:absolute;right:13px;top:13px;color:#a4a8b0}
+.cta{width:100%;margin-top:12px;border:0;background:linear-gradient(135deg,#ffcc00,#ffb800);height:50px;border-radius:14px;font-weight:950;color:#111;cursor:pointer}
+.hint{font-size:11px;color:#858b95;margin:8px 2px 0}.hidden{display:none!important}
+.fare{margin-top:12px;border:1px solid #eee;border-radius:15px;padding:14px;background:#fff}.fare h4{margin:0 0 8px}.fare-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px}.fare-total{border-top:1px solid #eee;margin-top:6px;padding-top:9px;font-weight:950;font-size:17px}
+.trust{position:absolute;z-index:5;bottom:22px;left:5vw;right:5vw;display:flex;justify-content:center;gap:10px}.trust span{background:rgba(255,255,255,.94);padding:11px 16px;border-radius:999px;font-size:12px;font-weight:800;box-shadow:0 8px 30px rgba(0,0,0,.18)}
+.section{padding:88px 5vw}.dark{background:#090a0e;color:#fff}.container{max-width:1180px;margin:auto}.section-title{font-size:clamp(32px,4vw,52px);letter-spacing:-.04em;margin:0 0 14px}.section-lead{color:#707680;max-width:650px;line-height:1.7}.dark .section-lead{color:#a8adb6}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:34px}.feature{border:1px solid #e8e9ed;border-radius:20px;padding:22px;background:#fff}.feature b{display:block;font-size:17px;margin:12px 0 7px}.feature p{margin:0;color:#737983;font-size:13px;line-height:1.6}.iconbox{width:42px;height:42px;border-radius:13px;background:#fff5c9;display:grid;place-items:center;font-size:20px}
+.vehicle-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:32px}.vehicle{background:#11141a;border:1px solid #242832;border-radius:20px;padding:16px}.vehicle .carph{height:110px;border-radius:15px;background:linear-gradient(135deg,#1a1e26,#0b0c10);display:grid;place-items:center;font-size:48px}.vehicle b{display:block;margin-top:12px}.vehicle small{color:#989faa}
+.footer{background:#050609;color:#a6abb4;padding:35px 5vw}.footer-inner{max-width:1180px;margin:auto;display:flex;justify-content:space-between;gap:20px}.footer .logo{color:#fff}
+.page-hero{padding:140px 5vw 70px;background:#0a0b0f;color:#fff}.page-hero h1{font-size:clamp(40px,6vw,70px);margin:0 0 12px;letter-spacing:-.05em}.page-hero p{color:#adb2bc;max-width:650px;line-height:1.7}
+.book-layout{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:start}.panel{border:1px solid #e7e8ec;border-radius:24px;padding:24px;background:#fff;box-shadow:0 16px 50px rgba(20,25,30,.07)}.panel h2{margin-top:0}.choice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.choice{border:1px solid #ddd;border-radius:15px;padding:14px;background:#fff;cursor:pointer}.choice.active{border-color:#e2b400;background:#fff8d9}.choice b{display:block}.choice small{color:#777}
+@media(max-width:980px){.hero{min-height:820px}.hero-inner{padding-top:115px;align-items:flex-end}.hero-copy{width:55%;padding-bottom:60px}.booking-card{left:auto;right:4vw;width:390px}.cards{grid-template-columns:repeat(2,1fr)}.vehicle-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){.navlinks,.navbtn{display:none}.navlinks.open{display:flex;position:absolute;top:76px;left:18px;right:18px;flex-direction:column;gap:0;padding:10px;background:rgba(7,8,12,.97);border:1px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:0 18px 45px rgba(0,0,0,.35);backdrop-filter:blur(14px);z-index:30}.navlinks.open a{display:block;padding:14px 16px;color:#fff;opacity:1;border-radius:10px}.navlinks.open a:hover{background:rgba(255,204,0,.12);color:var(--yellow)}.menu{display:block;position:relative;z-index:31;cursor:pointer}.hero{min-height:930px}.hero:after{background:linear-gradient(180deg,rgba(3,5,8,.72),rgba(3,5,8,.28) 45%,rgba(3,5,8,.82))}.hero-inner{padding:100px 18px 30px;align-items:flex-end}.hero-copy{width:100%;padding-bottom:500px}.hero h1{font-size:45px}.hero p{font-size:14px}.booking-card{left:18px;right:18px;top:auto;bottom:25px;width:auto}.trust{display:none}.cards,.vehicle-grid{grid-template-columns:1fr}.section{padding:64px 18px}.book-layout{grid-template-columns:1fr}.choice-grid{grid-template-columns:1fr}.footer-inner{flex-direction:column}}
+.brand{display:flex;align-items:center;gap:8px;font-weight:950;letter-spacing:-1.5px}.brand span{font-size:18px;color:inherit}.brand .logo{width:34px;height:34px;object-fit:contain;flex:0 0 34px}.nav .brand{color:#fff}.nav.scrolled .brand{color:#fff}.nav.scrolled{background:rgba(7,8,12,.92);backdrop-filter:blur(14px)}
+.vehicle .carph img{width:100%;height:100%;object-fit:contain;padding:8px}.vehicle .carph{overflow:hidden}.book-layout{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:start}.panel{border:1px solid #e7e8ec;border-radius:24px;padding:24px;background:#fff;box-shadow:0 16px 50px rgba(20,25,30,.07)}.panel h2{margin-top:0}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:34px}.feature{border:1px solid #e8e9ed;border-radius:20px;padding:22px;background:#fff}.feature b{display:block;font-size:17px;margin:12px 0 7px}.feature p{margin:0;color:#737983;font-size:13px;line-height:1.6}.iconbox{width:42px;height:42px;border-radius:13px;background:#fff5c9;display:grid;place-items:center;font-size:20px}.footer .brand{color:#fff}.footer .brand span{color:#fff}
+@media(max-width:980px){.book-layout{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:720px){.cards{grid-template-columns:1fr}.brand span{font-size:16px}.brand .logo{width:30px;height:30px;flex-basis:30px}}
+
+
+/* Taxi Mela home ride cards */
+.tm-cars{background:#071015;color:#fff;padding:70px 6vw 55px}
+.tm-cars-inner{max-width:1180px;margin:auto}
+.tm-section-heading{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:28px}.tm-section-heading span{width:48px;height:3px;background:#ffc400}.tm-section-heading h2{margin:0;font-size:28px}
+.tm-car-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.tm-car-card{min-width:0;border:1px solid rgba(255,255,255,.16);border-radius:14px;background:#0b151b;color:#fff;padding:12px 10px 15px;cursor:pointer;text-align:center;transition:.2s;overflow:hidden}
+.tm-car-card:hover{transform:translateY(-3px);border-color:#ffc400;box-shadow:0 10px 30px rgba(0,0,0,.22)}
+.tm-car-image{height:105px;display:flex;align-items:center;justify-content:center;margin-bottom:5px}.tm-car-image img{display:block;width:auto;height:auto;max-width:86%;max-height:92px;object-fit:contain}
+.tm-car-card strong{display:block;font-size:15px}.tm-car-card small{display:block;margin-top:5px;color:#c7ccd2;font-size:11px}
+.tm-radio{border:0;background:transparent;padding:0;color:inherit;cursor:pointer;font-weight:650;display:flex;align-items:center;gap:9px}
+.tm-more{border:0;background:transparent;width:100%;padding:0;text-align:left;cursor:pointer}
+.tm-home-distance{font-size:12px;color:#666;text-align:center;min-height:18px;margin-top:8px}.tm-home-distance.error{color:#b42318}
+.tm-extra-city{height:45px;border-bottom:1px solid #e2e3e6;display:flex;align-items:center}.tm-extra-city input{width:100%;border:0;background:transparent;outline:0;font-size:14px}
+@media(max-width:1050px){.tm-car-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.tm-car-grid{grid-template-columns:1fr 1fr}.tm-car-image{height:90px}.tm-car-image img{max-height:78px}.tm-section-heading h2{font-size:23px}}
+
+/* Homepage service-switch fields */
+.tm-service-choice{padding:12px 6px 4px;gap:18px}.tm-field select{border:0!important;background:transparent!important;height:100%!important;padding:0!important;box-shadow:none!important;outline:0;width:100%;font-size:14px;color:#222}.tm-field select:focus{box-shadow:none!important}.tm-local-airport-hidden{display:none!important}
+
+.city-input{width:100%;height:47px;border:1px solid #e2e4e9;background:#fbfbfc;border-radius:12px;padding:0 14px;outline:0;color:#222}.city-input:focus{border-color:#d7ad00;box-shadow:0 0 0 3px rgba(255,204,0,.16)}
+
+
+/* Mobile interaction reliability */
+button, .btn, .cta, .tab, .radio, .tm-tab, .tm-radio, .tm-more, .tm-car-card, .menu { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+@media(max-width:900px){
+  body.tm-home .navlinks.open{display:flex!important;position:absolute!important;top:72px!important;left:18px!important;right:18px!important;flex-direction:column!important;gap:0!important;padding:10px!important;background:rgba(7,8,12,.98)!important;border:1px solid rgba(255,255,255,.14)!important;border-radius:16px!important;box-shadow:0 18px 45px rgba(0,0,0,.45)!important;z-index:1001!important;}
+  body.tm-home .navlinks.open a{display:block!important;padding:14px 16px!important;color:#fff!important;opacity:1!important;}
+  body.tm-home .menu{display:block!important;position:relative!important;z-index:1002!important;cursor:pointer!important;}
+  .navlinks.open{z-index:1001;}
+  .menu{z-index:1002;}
+}
+@media(max-width:720px){
+  .tabs .tab{min-height:48px;}
+  .radio{min-height:42px;padding:8px 4px;cursor:pointer;user-select:none;-webkit-user-select:none;}
+  .cta,.btn{min-height:48px;}
+  .field input,.field select{min-height:47px;}
+}

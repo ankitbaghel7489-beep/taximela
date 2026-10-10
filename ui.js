@@ -1,0 +1,108 @@
+/* Taxi Mela - mobile-safe UI layer (plain script; does NOT wait for Firebase / Razorpay / Maps).
+   Hamburger, Home tabs/radios, Book a Ride tabs/radios and car cards run from here.
+   Fare / OTP / payment / Firebase logic stays in app.js (unchanged).
+   One delegated 'click' listener: fires reliably on touch and behaves the same on PC. */
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var setHidden = function (sel, on) { var e = $(sel); if (e) e.classList.toggle('hidden', !!on); };
+  var dataOf = function (sel, key, dflt) { var e = $(sel); return (e && e.dataset[key]) || dflt; };
+
+  /* ---------- Hamburger menu ---------- */
+  function menuIsOpen() { var n = $('.navlinks'); return !!(n && n.classList.contains('open')); }
+  function setMenu(open) {
+    var btn = $('.menu'), nav = $('.navlinks');
+    if (!btn || !nav) return;
+    nav.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    btn.textContent = open ? '\u2715' : '\u2630';
+  }
+
+  /* ---------- Home page ---------- */
+  function renderHome() {
+    var mode = dataOf('.tm-tab.active', 'homeMode', 'outstation');
+    var la = mode === 'local';
+    var sv = dataOf('.tm-radio[data-home-service].active', 'homeService', 'local');
+    setHidden('#homeOutstationFields', la);
+    setHidden('#homeLocalAirportFields', !la);
+    setHidden('#homeLocalFields', !la || sv !== 'local');
+    setHidden('#homeAirportFields', !la || sv !== 'airport');
+    setHidden('#homeAddCity', mode !== 'outstation');
+    setHidden('#homeTrip', mode !== 'outstation');
+    var d = $('#homeDistance');
+    if (d) { d.textContent = ''; d.classList.remove('error'); }
+  }
+
+  /* ---------- Book a Ride page ---------- */
+  var CABS = ['Hatchback', 'Sedan', 'Ertiga', 'Innova', 'Innova Crysta'];
+  function syncCabs() {
+    var sel = $('#category');
+    if (!sel) return;
+    var mode = dataOf('.tab.active', 'mode', 'outstation');
+    var cur = sel.value;
+    var allowed = mode === 'outstation' ? CABS : CABS.filter(function (c) { return c !== 'Innova Crysta'; });
+    sel.innerHTML = allowed.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+    sel.value = allowed.indexOf(cur) > -1 ? cur : (allowed.indexOf('Sedan') > -1 ? 'Sedan' : allowed[0]);
+  }
+  function resetFare() { setHidden('#customerBlock', true); setHidden('#paymentBlock', true); setHidden('#fareBox', true); }
+  function renderBookMode(m) {
+    syncCabs();
+    setHidden('#outstationFields', m !== 'outstation');
+    setHidden('#localFields', m !== 'local');
+    setHidden('#airportFields', m !== 'airport');
+    setHidden('#outstation-trip', m !== 'outstation');
+    setHidden('#toll-wrap', m !== 'outstation');
+    setHidden('#returnWrap', m !== 'outstation');
+    setHidden('#extraHoursWrap', m !== 'local');
+    resetFare();
+  }
+  function pick(selector, chosen) { $$(selector).forEach(function (x) { x.classList.toggle('active', x === chosen); }); }
+
+  /* ---------- Clicks (single delegated listener) ---------- */
+  document.addEventListener('click', function (e) {
+    var t = e.target, el;
+    if (!t || !t.closest) return;
+
+    // Menu
+    if (t.closest('.menu')) { e.stopPropagation(); setMenu(!menuIsOpen()); return; }
+    if (t.closest('.navlinks a')) { setMenu(false); return; }
+    if (menuIsOpen() && !t.closest('.navlinks')) setMenu(false);
+
+    // Home page
+    if ((el = t.closest('.tm-tab[data-home-mode]'))) { pick('.tm-tab[data-home-mode]', el); renderHome(); return; }
+    if ((el = t.closest('.tm-radio[data-home-trip]'))) { pick('.tm-radio[data-home-trip]', el); return; }
+    if ((el = t.closest('.tm-radio[data-home-service]'))) { pick('.tm-radio[data-home-service]', el); renderHome(); return; }
+    if (t.closest('#homeAddCity')) {
+      var wrap = $('#homeExtraCities');
+      if (!wrap) return;
+      var row = document.createElement('div');
+      row.className = 'tm-extra-city';
+      row.innerHTML = '<span style="width:22px;color:#7e8590">\u2316</span><input list="homeCities" placeholder="Search another city" autocomplete="off">';
+      wrap.appendChild(row);
+      return;
+    }
+    if ((el = t.closest('.tm-car-card'))) { location.href = 'book.html?category=' + encodeURIComponent(el.dataset.car || 'Sedan'); return; }
+
+    // Book a Ride page
+    if ((el = t.closest('.tab[data-mode]'))) { pick('.tab[data-mode]', el); renderBookMode(el.dataset.mode); return; }
+    if ((el = t.closest('.radio[data-trip]'))) { pick('.radio[data-trip]', el); resetFare(); return; }
+
+    // Buttons that need Firebase / Maps / Razorpay (handled in app.js). If app.js has not loaded yet,
+    // show a visible message instead of silently doing nothing.
+    if (t.closest('#homeSubmit,#estimateBtn,#sendOtpBtn,#verifyOtpBtn,#payBtn') && !window.__tmAppReady) {
+      var msg = 'Page abhi load ho raha hai (network slow hai). 2-3 second ruk kar dobara dabaiye; na chale to page refresh karein.';
+      var d = $('#homeDistance'), f = $('#formMsg');
+      if (d) { d.textContent = msg; d.classList.add('error'); }
+      else if (f) { f.textContent = msg; f.classList.remove('hidden'); }
+    }
+  });
+
+  window.addEventListener('scroll', function () {
+    var n = $('.nav');
+    if (n) n.classList.toggle('scrolled', window.scrollY > 25);
+  }, { passive: true });
+
+  function init() { if ($('#homeLocalAirportFields')) renderHome(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
