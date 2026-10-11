@@ -115,7 +115,7 @@ function homeSetMode(mode){
   $$('.tm-tab[data-home-mode]').forEach(x=>x.classList.toggle('active',x.dataset.homeMode===mode));
   renderHomeServiceFields();
 }
-function openInlineBooking(p){
+async function openInlineBooking(p){
   const sec=$('#homeBookSection');
   if(!sec){location.href='book.html?'+new URLSearchParams(p).toString();return;}
   const set=(id,v)=>{const e=$(id);if(e)e.value=v??'';};
@@ -124,7 +124,7 @@ function openInlineBooking(p){
   if(p.mode==='outstation'){set('#pickup',p.pickup);set('#destination',p.destination);}
   if(p.mode==='local'){set('#localCity',p.localCity);set('#package',p.package||'20');}
   if(p.mode==='airport'){set('#airportCity',p.airportCity);set('#airportDirection',p.airportDirection);set('#airport',p.airport);}
-  if(p.phone)set('#customerPhone',p.phone);
+  if(auth.currentUser)set('#customerPhone',(auth.currentUser.phoneNumber||'').replace('+91',''));else if(p.phone)set('#customerPhone',p.phone);
   $('#toll-wrap')?.classList.toggle('hidden',p.mode!=='outstation');
   $('#returnWrap')?.classList.toggle('hidden',!(p.mode==='outstation'&&p.trip==='roundtrip'));
   $('#extraHoursWrap')?.classList.toggle('hidden',p.mode!=='local');
@@ -133,6 +133,8 @@ function openInlineBooking(p){
   const sum=$('#homeBookSummary');if(sum)sum.textContent=`${route}${p.mode==='outstation'?(p.trip==='roundtrip'?' · Round trip':' · One way'):''}`;
   ['#fareBox','#customerBlock','#paymentBlock'].forEach(i=>$(i)?.classList.add('hidden'));hideMsg();
   sec.classList.remove('hidden');sec.scrollIntoView({behavior:'smooth',block:'start'});
+  if(auth.currentUser){set('#customerPhone',String(auth.currentUser.phoneNumber||'').replace('+91',''));await estimate();}
+  else{$('#customerBlock')?.classList.remove('hidden');const st=$('#authStatus');if(st){st.style.color='';st.textContent='Verify your mobile number with an OTP to see your fare.';}}
 }
 function initHome(){
   setupNav();
@@ -214,7 +216,22 @@ function payloadForEstimate(){
   return {tripType:mode,category:$('#category').value,tollMode:$('#toll').value,packageKm:num($('#package')?.value),extraHours:num($('#extraHours')?.value),pet:$('#pet').checked,pickupDateTime:new Date(dt).toISOString(),returnDateTime:ret?new Date(ret).toISOString():null,routePoints:points,distanceMultiplier:mode==='outstation'&&selectedTrip()==='roundtrip'?1.8:1,isOneWay:mode==='outstation'?selectedTrip()==='oneway':true};
 }
 function fallbackFare(){ throw new Error('Live fare service is unavailable. Please try again after the Firebase function is deployed.'); }
-function renderFare(r){currentFare=r;$('#fareBox')?.classList.remove('hidden');$('#fareAmount').textContent=money(r.totalFare);$('#fareDistance').textContent=`${Number(r.distanceKm||0).toFixed(0)} km · ${r.mode||''}`;$('#fareAdvance').textContent=money(r.advance);$('#fareLabel').textContent=`${$('#category').value} · ${selectedTrip()==='roundtrip'?'Round Trip':activeMode()}`;$('#customerBlock')?.classList.remove('hidden');if(auth.currentUser){$('#paymentBlock')?.classList.remove('hidden');$('#payBtn').disabled=false;}else $('#paymentBlock')?.classList.add('hidden');}
+function initAdvanceSlider(r){
+  const sl=$('#advSlider');if(!sl)return;
+  const min=Math.min(100,Math.max(0,Math.round(num(r.commissionPercent??pricing.commissionPercent)*100)/100));
+  const steps=Math.max(1,Math.ceil((100-min)/5));
+  sl.disabled=min>=100;sl.min=min;sl.max=100;sl.step=min>=100?1:(100-min)/steps;sl.value=min;
+  const apply=()=>{
+    const pct=Number(sl.value);r.advancePercent=pct;
+    r.advance=Math.round((num(r.baseFare)*pct/100+num(r.petCharge))*100)/100;
+    $('#fareAdvance').textContent=money(r.advance);
+    const b=$('#fareBalance');if(b)b.textContent=money(Math.max(0,num(r.totalFare)-r.advance));
+    const l=$('#advPctLabel');if(l)l.textContent=Math.round(pct)+'%';
+    const h=$('#advHint');if(h)h.textContent=`Minimum ${Math.round(min)}% required. Pay more now, less in cash!`;
+  };
+  sl.oninput=apply;apply();
+}
+function renderFare(r){currentFare=r;setTimeout(()=>$('#fareBox')?.scrollIntoView({behavior:'smooth',block:'center'}),150);$('#fareBox')?.classList.remove('hidden');$('#fareAmount').textContent=money(r.totalFare);$('#fareDistance').textContent=`${Number(r.distanceKm||0).toFixed(0)} km · ${r.mode||''}`;$('#fareAdvance').textContent=money(r.advance);initAdvanceSlider(r);$('#fareLabel').textContent=`${$('#category').value} · ${selectedTrip()==='roundtrip'?'Round Trip':activeMode()}`;$('#customerBlock')?.classList.remove('hidden');if(auth.currentUser){$('#paymentBlock')?.classList.remove('hidden');$('#payBtn').disabled=false;}else $('#paymentBlock')?.classList.add('hidden');}
 async function estimate(){hideMsg();if(!auth.currentUser){$('#customerBlock')?.classList.remove('hidden');msg('Please enter your mobile number and verify the OTP to see your fare.');$('#customerBlock')?.scrollIntoView({behavior:'smooth',block:'center'});return;}$('#estimateBtn').disabled=true;$('#estimateBtn').textContent='Calculating…';try{validateBasics();const p=payloadForEstimate();try{const result=await estimateFareFn(p);renderFare(result.data);toast('Fare estimate ready. Enter your details to continue.');}catch(fnErr){console.warn('estimateFare unavailable',fnErr);if(activeMode()!=='local')throw fnErr;const category=$('#category').value;const packageKm=num($('#package').value);const pkg=LOCAL_PACKAGE_RATES[category]?.[packageKm];if(!pkg)throw new Error('This local package is not available for the selected cab.');const extraHours=Math.max(0,num($('#extraHours').value));const extraHoursFare=extraHours*300;const petCharge=$('#pet').checked?750:0;const baseFare=pkg+extraHoursFare;const commissionPercent=num(pricing.commissionPercent);const totalFare=baseFare+petCharge;const advance=(baseFare*commissionPercent/100)+petCharge;renderFare({distanceKm:packageKm,baseFare,extraHoursFare,petCharge,nightCharge:0,totalFare,advance,commissionPercent,mode:`${packageKm} km package`});toast('Local package fare calculated.');}}catch(e){console.error('estimateFare',e);msg(e?.message||'Could not calculate the fare. Please try again.');}finally{$('#estimateBtn').disabled=false;$('#estimateBtn').textContent='Check Price & Book Cab';}}
 
 function syncCabCategories(){
