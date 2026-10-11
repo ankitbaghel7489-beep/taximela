@@ -143,29 +143,29 @@ function initHome(){
     const phone=$('#homePhone')?.value.replace(/\D/g,'')||'';
     const out=$('#homeDistance');
     const fail=t=>{out.textContent=t;out.classList.add('error');};
-    if(phone.length!==10) return fail('Mobile number daalna zaruri hai (10 digits). OTP ke baad fare dikhega.');
+    if(phone.length!==10) return fail('Please enter a valid 10-digit mobile number. Your fare is shown after OTP verification.');
     out.classList.remove('error');out.textContent='';
     window.__tmExtraCities=[];
     if(mode==='outstation'){
       const pickup=$('#homePickup')?.value.trim(),destination=$('#homeDestination')?.value.trim();
-      if(!pickup||!destination) return fail('Pickup aur destination city select karein.');
-      if(pickup.toLowerCase()===destination.toLowerCase()) return fail('Pickup aur destination same nahi ho sakte.');
+      if(!pickup||!destination) return fail('Please select pickup and destination cities.');
+      if(pickup.toLowerCase()===destination.toLowerCase()) return fail('Pickup and destination cannot be the same.');
       const extras=$$('#homeExtraCities input').map(i=>i.value.trim()).filter(Boolean);
       const values=[pickup,...extras,destination];
-      if(values.map(getCoord).filter(Boolean).length!==values.length) return fail('Selected city list se city choose karein.');
+      if(values.map(getCoord).filter(Boolean).length!==values.length) return fail('Please choose each city from the list.');
       window.__tmExtraCities=extras;
       const roundtrip=$('.tm-radio[data-home-trip].active')?.dataset.homeTrip==='roundtrip';
       return openInlineBooking({mode:'outstation',pickup,destination,trip:roundtrip?'roundtrip':'oneway',phone});
     }
     if(service==='local'){
       const city=$('#homeLocalCity')?.value.trim(),pkg=$('#homePackage')?.value||'20';
-      if(!city) return fail('Local rental ke liye city select karein.');
-      if(!getCoord(city)) return fail('List se valid city select karein.');
+      if(!city) return fail('Please select a city for local rental.');
+      if(!getCoord(city)) return fail('Please select a valid city from the list.');
       return openInlineBooking({mode:'local',localCity:city,package:pkg,phone});
     }
     const city=$('#homeAirportCity')?.value.trim(),direction=$('#homeAirportDirection')?.value||'',airport=$('#homeAirport')?.value||'';
-    if(!city||!direction||!airport) return fail('Airport city, direction aur airport select karein.');
-    if(!getCoord(city)||!getCoord(airport)) return fail('Selected airport/city ke coordinates available nahi hain.');
+    if(!city||!direction||!airport) return fail('Please select the city, transfer direction and airport.');
+    if(!getCoord(city)||!getCoord(airport)) return fail('Location details for the selected city or airport are unavailable.');
     return openInlineBooking({mode:'airport',airportCity:city,airportDirection:direction,airport,phone});
   });
   renderHomeServiceFields();
@@ -215,7 +215,7 @@ function payloadForEstimate(){
 }
 function fallbackFare(){ throw new Error('Live fare service is unavailable. Please try again after the Firebase function is deployed.'); }
 function renderFare(r){currentFare=r;$('#fareBox')?.classList.remove('hidden');$('#fareAmount').textContent=money(r.totalFare);$('#fareDistance').textContent=`${Number(r.distanceKm||0).toFixed(0)} km · ${r.mode||''}`;$('#fareAdvance').textContent=money(r.advance);$('#fareLabel').textContent=`${$('#category').value} · ${selectedTrip()==='roundtrip'?'Round Trip':activeMode()}`;$('#customerBlock')?.classList.remove('hidden');if(auth.currentUser){$('#paymentBlock')?.classList.remove('hidden');$('#payBtn').disabled=false;}else $('#paymentBlock')?.classList.add('hidden');}
-async function estimate(){hideMsg();if(!auth.currentUser){$('#customerBlock')?.classList.remove('hidden');msg('Fare dekhne ke liye pehle apna mobile number daalein aur OTP se verify karein.');$('#customerBlock')?.scrollIntoView({behavior:'smooth',block:'center'});return;}$('#estimateBtn').disabled=true;$('#estimateBtn').textContent='Calculating…';try{validateBasics();const p=payloadForEstimate();try{const result=await estimateFareFn(p);renderFare(result.data);toast('Fare estimate ready. Enter your details to continue.');}catch(fnErr){console.warn('estimateFare unavailable',fnErr);if(activeMode()!=='local')throw fnErr;const category=$('#category').value;const packageKm=num($('#package').value);const pkg=LOCAL_PACKAGE_RATES[category]?.[packageKm];if(!pkg)throw new Error('This local package is not available for the selected cab.');const extraHours=Math.max(0,num($('#extraHours').value));const extraHoursFare=extraHours*300;const petCharge=$('#pet').checked?750:0;const baseFare=pkg+extraHoursFare;const commissionPercent=num(pricing.commissionPercent);const totalFare=baseFare+petCharge;const advance=(baseFare*commissionPercent/100)+petCharge;renderFare({distanceKm:packageKm,baseFare,extraHoursFare,petCharge,nightCharge:0,totalFare,advance,commissionPercent,mode:`${packageKm} km package`});toast('Local package fare calculated.');}}catch(e){console.error('estimateFare',e);msg(e?.message||'Could not calculate the fare. Please try again.');}finally{$('#estimateBtn').disabled=false;$('#estimateBtn').textContent='Check Price & Book Cab';}}
+async function estimate(){hideMsg();if(!auth.currentUser){$('#customerBlock')?.classList.remove('hidden');msg('Please enter your mobile number and verify the OTP to see your fare.');$('#customerBlock')?.scrollIntoView({behavior:'smooth',block:'center'});return;}$('#estimateBtn').disabled=true;$('#estimateBtn').textContent='Calculating…';try{validateBasics();const p=payloadForEstimate();try{const result=await estimateFareFn(p);renderFare(result.data);toast('Fare estimate ready. Enter your details to continue.');}catch(fnErr){console.warn('estimateFare unavailable',fnErr);if(activeMode()!=='local')throw fnErr;const category=$('#category').value;const packageKm=num($('#package').value);const pkg=LOCAL_PACKAGE_RATES[category]?.[packageKm];if(!pkg)throw new Error('This local package is not available for the selected cab.');const extraHours=Math.max(0,num($('#extraHours').value));const extraHoursFare=extraHours*300;const petCharge=$('#pet').checked?750:0;const baseFare=pkg+extraHoursFare;const commissionPercent=num(pricing.commissionPercent);const totalFare=baseFare+petCharge;const advance=(baseFare*commissionPercent/100)+petCharge;renderFare({distanceKm:packageKm,baseFare,extraHoursFare,petCharge,nightCharge:0,totalFare,advance,commissionPercent,mode:`${packageKm} km package`});toast('Local package fare calculated.');}}catch(e){console.error('estimateFare',e);msg(e?.message||'Could not calculate the fare. Please try again.');}finally{$('#estimateBtn').disabled=false;$('#estimateBtn').textContent='Check Price & Book Cab';}}
 
 function syncCabCategories(){
   const select=$('#category'); if(!select) return;
@@ -285,7 +285,7 @@ async function initBook(){
   const params=new URLSearchParams(location.search);
   const mode=params.get('mode'),category=params.get('category'),pickup=params.get('pickup'),destination=params.get('destination'),phone=params.get('phone');
   if(mode && ['outstation','local','airport'].includes(mode)){const tab=$(`.tab[data-mode="${mode}"]`);tab?.click();}
-  const _init=await Promise.allSettled([loadPricing(),loadServiceCities()]);if(_init[0].status==='rejected'){console.warn('pricing',_init[0].reason);msg(_init[0].reason?.message||'Pricing load nahi ho paaya.');}cityOptions();syncCabCategories();
+  const _init=await Promise.allSettled([loadPricing(),loadServiceCities()]);if(_init[0].status==='rejected'){console.warn('pricing',_init[0].reason);msg(_init[0].reason?.message||'Pricing could not be loaded. Please try again.');}cityOptions();syncCabCategories();
   if(category && $('#category') && [...$('#category').options].some(o=>o.value===category))$('#category').value=category;
   if(pickup&&$('#pickup'))$('#pickup').value=pickup;
   if(destination&&$('#destination'))$('#destination').value=destination;
