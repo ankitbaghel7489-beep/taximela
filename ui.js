@@ -91,7 +91,7 @@
     // Buttons that need Firebase / Maps / Razorpay (handled in app.js). If app.js has not loaded yet,
     // show a visible message instead of silently doing nothing.
     if (t.closest('#homeSubmit,#estimateBtn,#sendOtpBtn,#verifyOtpBtn,#payBtn') && !window.__tmAppReady) {
-      var msg = 'Page abhi load ho raha hai (network slow hai). 2-3 second ruk kar dobara dabaiye; na chale to page refresh karein.';
+      var msg = 'The page is still loading. Please wait a few seconds and try again, or refresh the page.';
       var d = $('#homeDistance'), f = $('#formMsg');
       if (d) { d.textContent = msg; d.classList.add('error'); }
       else if (f) { f.textContent = msg; f.classList.remove('hidden'); }
