@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -60,6 +60,8 @@
       .tm-home .menu{display:block!important;position:relative;z-index:1002;cursor:pointer;touch-action:manipulation}
       .tm-hero{min-height:860px}.tm-hero-inner{min-height:860px;padding:100px 18px 40px}.tm-book-card{width:min(390px,100%);margin-top:25px}.tm-benefits{width:94%;grid-template-columns:1fr;gap:10px;padding:14px 18px}.tm-features{padding-top:85px}.tm-features-inner{grid-template-columns:1fr 1fr}.tm-feature{border-right:0;border-bottom:1px solid rgba(255,255,255,.14);padding:20px}.tm-feature:nth-child(odd){border-right:1px solid rgba(255,255,255,.14)}}
     @media(max-width:600px){.tm-home .nav{padding:0 18px}.tm-home .nav .brand .logo{width:34px;height:34px;flex-basis:34px}.tm-home .nav .brand span{font-size:17px}.tm-home .navbtn{display:none}.tm-hero{min-height:820px}.tm-hero-inner{min-height:820px;padding-top:95px}.tm-book-card{margin-top:20px}.tm-features-inner{grid-template-columns:1fr}.tm-feature,.tm-feature:nth-child(odd){border-right:0}.tm-benefits{bottom:-6px}}
+    .auth-card{margin-top:14px;padding:16px;border:1px solid #eee;border-radius:15px;background:#fffbea}.status-card{margin-top:18px;padding:20px;border-radius:18px;background:#0b0b0b;color:#fff}.status-pill{display:inline-flex;padding:7px 11px;border-radius:999px;background:#ffcc00;color:#111;font-weight:900;font-size:12px}.status-track{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:18px}.status-step{padding:10px 7px;border:1px solid #333;border-radius:10px;text-align:center;font-size:11px;color:#aaa}.status-step.active{background:#ffcc00;color:#111;border-color:#ffcc00;font-weight:900}.otp-row{display:grid;grid-template-columns:1fr auto;gap:10px}.recaptcha{margin-top:10px}.booking-summary{display:grid;gap:8px;margin:14px 0}.booking-summary div{display:flex;justify-content:space-between;gap:15px;font-size:13px;color:#ccc}.booking-summary strong{color:#fff}.logo{object-fit:contain}.vehicle .carph img{max-height:100%;max-width:90%;object-fit:contain}
+    @media(max-width:680px){.status-track{grid-template-columns:1fr 1fr}.otp-row{grid-template-columns:1fr}}
   </style>
 </head>
 <body class="tm-home">
@@ -114,7 +116,7 @@
             <div class="tm-phone"><span class="code">+91</span><input id="homePhone" aria-label="Mobile number" placeholder="Enter mobile number" inputmode="numeric" maxlength="10"></div>
             <button class="tm-submit" id="homeSubmit" type="button">Check Price &amp; Book Cab</button>
             <div id="homeDistance" class="tm-home-distance" aria-live="polite"></div>
-            <div class="tm-note">Fare and booking details continue on the Taxi Mela booking page.</div>
+            <div class="tm-note">Fare, OTP and payment continue right below.</div>
           </div>
         </div>
       </div>
@@ -123,6 +125,18 @@
         <div>No return fare</div>
         <div>No over-pricing</div>
       </div>
+    </section>
+
+    <section class="section hidden" id="homeBookSection" style="background:#f6f7f9">
+      <div class="container" style="max-width:760px"><div class="panel"><h2>Complete your booking</h2><p id="homeBookSummary" class="small" style="margin:0 0 10px"></p><div style="display:none"><input id="pickup"><input id="destination"><input id="localCity"><input id="package" value="20"><input id="airportCity"><input id="airportDirection"><input id="airport"><span id="mirrorMode" class="tab active" data-mode="outstation"></span><span id="mirrorTrip" class="radio active" data-trip="oneway"></span></div><div class="form" style="padding:0"><div class="field"><select id="category"><option>Hatchback</option><option selected>Sedan</option><option>Ertiga</option><option>Innova</option><option>Innova Crysta</option></select></div><div id="toll-wrap" class="field"><select id="toll"><option value="tollExcl">Toll Excluded</option><option value="tollIncl">Toll Included</option></select></div>
+<div class="form-grid" style="margin-top:8px"><div class="field"><label>Pickup date &amp; time</label><input id="pickupDateTime" type="datetime-local"></div><div class="field" id="returnWrap"><label>Return date &amp; time</label><input id="returnDateTime" type="datetime-local"></div></div>
+<div class="field" style="margin-top:10px"><label><input id="pet" type="checkbox" style="width:18px;height:18px;height:18px;vertical-align:middle;margin-right:6px"> Traveling with a pet (+₹750)</label></div>
+<div id="extraHoursWrap" class="field hidden" style="margin-top:10px"><label>Extra hours</label><input id="extraHours" type="number" min="0" step="1" value="0"></div>
+<button class="cta" id="estimateBtn" type="button">Calculate Fare</button><div id="formMsg" class="hint hidden"></div><div id="fareBox" class="fare hidden"><h4>Fare estimate</h4><div class="fare-row"><span id="fareLabel">—</span><span id="fareAmount">—</span></div><div class="fare-row"><span>Distance</span><span id="fareDistance">—</span></div><div class="fare-row"><span>Advance</span><span id="fareAdvance">—</span></div></div>
+<div id="customerBlock" class="auth-card hidden"><h3 style="margin:0 0 8px">Confirm your booking</h3><div class="form-grid"><div class="field"><label>Your name</label><input id="customerName" placeholder="Full name"></div><div class="field"><label>Phone</label><input id="customerPhone" inputmode="tel" maxlength="10" placeholder="10-digit mobile number"></div><div class="field"><label>Email (optional)</label><input id="customerEmail" type="email"></div><div class="field"><label>Coupon (optional)</label><input id="couponCode" placeholder="Promo code"></div></div><div id="recaptcha-container" class="recaptcha"></div><div class="otp-row" style="margin-top:12px"><button class="btn btn-primary" id="sendOtpBtn" type="button">Send OTP</button><button class="btn btn-outline" id="verifyOtpBtn" type="button" disabled>Verify OTP</button></div><input id="otp" class="hidden" style="width:100%;margin-top:10px;padding:12px;border:1px solid #ddd;border-radius:11px" inputmode="numeric" maxlength="6" placeholder="Enter OTP"><div id="authStatus" class="small" style="margin-top:8px"></div></div>
+<div id="paymentBlock" class="auth-card hidden"><h3 style="margin:0 0 6px">Pay advance to confirm</h3><p class="small">Secure Razorpay payment. Booking is created only after server-side payment verification.</p><button class="cta" id="payBtn" type="button">Pay Advance</button><div id="paymentStatus" class="small" style="margin-top:8px"></div></div>
+<div id="statusCard" class="status-card hidden"><span class="status-pill" id="statusPill">Searching Driver</span><h3 id="statusTitle">Your booking is confirmed</h3><div class="booking-summary"><div><span>Booking ID</span><strong id="bookingIdText">—</strong></div><div><span>Route</span><strong id="routeText">—</strong></div><div><span>Cab</span><strong id="cabText">—</strong></div><div><span>Fare</span><strong id="totalText">—</strong></div></div><div class="status-track"><div class="status-step active" data-status-step="Searching Driver">Searching</div><div class="status-step" data-status-step="Driver Arriving">Driver</div><div class="status-step" data-status-step="On the way">On the way</div><div class="status-step" data-status-step="Completed">Completed</div></div></div>
+</div></div></div>
     </section>
 
     <section class="tm-cars" id="cars">
@@ -154,5 +168,5 @@
       <div class="footer-links" style="display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px"><a href="driver.html">Become a Driver Partner</a><a href="policies.html?type=terms">Terms &amp; Conditions</a><a href="policies.html?type=privacy">Privacy Policy</a><a href="policies.html?type=refund">Refund &amp; Cancellation</a><a href="policies.html?type=driver">Driver Agreement</a></div><div>© 2026 Taxi Mela · v3</div>
     </div>
   </footer>
-</body>
+<div id="toast" class="toast"></div></body>
 </html>

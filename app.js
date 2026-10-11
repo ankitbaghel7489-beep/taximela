@@ -115,42 +115,58 @@ function homeSetMode(mode){
   $$('.tm-tab[data-home-mode]').forEach(x=>x.classList.toggle('active',x.dataset.homeMode===mode));
   renderHomeServiceFields();
 }
+function openInlineBooking(p){
+  const sec=$('#homeBookSection');
+  if(!sec){location.href='book.html?'+new URLSearchParams(p).toString();return;}
+  const set=(id,v)=>{const e=$(id);if(e)e.value=v??'';};
+  ['#pickup','#destination','#localCity','#airportCity','#airportDirection','#airport'].forEach(i=>set(i,''));
+  $('#mirrorMode').dataset.mode=p.mode;$('#mirrorTrip').dataset.trip=p.trip||'oneway';
+  if(p.mode==='outstation'){set('#pickup',p.pickup);set('#destination',p.destination);}
+  if(p.mode==='local'){set('#localCity',p.localCity);set('#package',p.package||'20');}
+  if(p.mode==='airport'){set('#airportCity',p.airportCity);set('#airportDirection',p.airportDirection);set('#airport',p.airport);}
+  if(p.phone)set('#customerPhone',p.phone);
+  $('#toll-wrap')?.classList.toggle('hidden',p.mode!=='outstation');
+  $('#returnWrap')?.classList.toggle('hidden',!(p.mode==='outstation'&&p.trip==='roundtrip'));
+  $('#extraHoursWrap')?.classList.toggle('hidden',p.mode!=='local');
+  syncCabCategories();
+  const route=p.mode==='outstation'?[p.pickup,...(window.__tmExtraCities||[]),p.destination].join(' → '):p.mode==='local'?`${p.localCity} · ${p.package} km local rental`:`${p.airportCity} · ${p.airportDirection} · ${p.airport}`;
+  const sum=$('#homeBookSummary');if(sum)sum.textContent=`${route}${p.mode==='outstation'?(p.trip==='roundtrip'?' · Round trip':' · One way'):''}`;
+  ['#fareBox','#customerBlock','#paymentBlock'].forEach(i=>$(i)?.classList.add('hidden'));hideMsg();
+  sec.classList.remove('hidden');sec.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function initHome(){
   setupNav();
   /* tabs, radios, Add City, car cards: ui.js me (Firebase se independent) */
-  $('#homeSubmit')?.addEventListener('click',async()=>{
+  $('#homeSubmit')?.addEventListener('click',()=>{
     const mode=$('.tm-tab.active')?.dataset.homeMode||'outstation';
     const service=$('.tm-radio[data-home-service].active')?.dataset.homeService||'local';
     const phone=$('#homePhone')?.value.replace(/\D/g,'')||'';
     const out=$('#homeDistance');
-    const go=params=>{if(phone)params.set('phone',phone);location.href=`book.html?${params.toString()}`;};
-    if(phone && phone.length!==10){out.textContent='Mobile number 10 digits ka hona chahiye.';out.classList.add('error');return;}
-    out.classList.remove('error');
+    const fail=t=>{out.textContent=t;out.classList.add('error');};
+    if(phone && phone.length!==10) return fail('Mobile number 10 digits ka hona chahiye.');
+    out.classList.remove('error');out.textContent='';
+    window.__tmExtraCities=[];
     if(mode==='outstation'){
       const pickup=$('#homePickup')?.value.trim(),destination=$('#homeDestination')?.value.trim();
-      if(!pickup||!destination){out.textContent='Pickup aur destination city select karein.';out.classList.add('error');return;}
-      if(pickup.toLowerCase()===destination.toLowerCase()){out.textContent='Pickup aur destination same nahi ho sakte.';out.classList.add('error');return;}
-      const values=[$('#homePickup')?.value,...$$('#homeExtraCities input').map(i=>i.value),$('#homeDestination')?.value].filter(Boolean);
-      const points=values.map(getCoord).filter(Boolean);
-      if(points.length!==values.length){out.textContent='Selected city list se city choose karein.';out.classList.add('error');return;}
-      out.textContent='Google Maps se driving distance calculate ho rahi hai…';
-      const btn=$('#homeSubmit');btn.disabled=true;
-      try{let distance=await googleDrivingDistance(points);const roundtrip=$('.tm-radio[data-home-trip].active')?.dataset.homeTrip==='roundtrip';if(roundtrip)distance=Math.round(distance*1.8*10)/10;const params=new URLSearchParams({mode:'outstation',pickup,destination,distanceKm:String(distance),trip:roundtrip?'roundtrip':'oneway'});go(params);}catch(e){console.error(e);out.textContent=e.message||'Distance calculate nahi ho paaya.';out.classList.add('error');}finally{btn.disabled=false;}
-      return;
+      if(!pickup||!destination) return fail('Pickup aur destination city select karein.');
+      if(pickup.toLowerCase()===destination.toLowerCase()) return fail('Pickup aur destination same nahi ho sakte.');
+      const extras=$$('#homeExtraCities input').map(i=>i.value.trim()).filter(Boolean);
+      const values=[pickup,...extras,destination];
+      if(values.map(getCoord).filter(Boolean).length!==values.length) return fail('Selected city list se city choose karein.');
+      window.__tmExtraCities=extras;
+      const roundtrip=$('.tm-radio[data-home-trip].active')?.dataset.homeTrip==='roundtrip';
+      return openInlineBooking({mode:'outstation',pickup,destination,trip:roundtrip?'roundtrip':'oneway',phone});
     }
     if(service==='local'){
       const city=$('#homeLocalCity')?.value.trim(),pkg=$('#homePackage')?.value||'20';
-      if(!city){out.textContent='Local rental ke liye city select karein.';out.classList.add('error');return;}
-      if(!getCoord(city)){out.textContent='List se valid city select karein.';out.classList.add('error');return;}
-      const params=new URLSearchParams({mode:'local',localCity:city,package:pkg});go(params);return;
+      if(!city) return fail('Local rental ke liye city select karein.');
+      if(!getCoord(city)) return fail('List se valid city select karein.');
+      return openInlineBooking({mode:'local',localCity:city,package:pkg,phone});
     }
     const city=$('#homeAirportCity')?.value.trim(),direction=$('#homeAirportDirection')?.value||'',airport=$('#homeAirport')?.value||'';
-    if(!city||!direction||!airport){out.textContent='Airport city, direction aur airport select karein.';out.classList.add('error');return;}
-    const cityPoint=getCoord(city),airportPoint=getCoord(airport);
-    if(!cityPoint||!airportPoint){out.textContent='Selected airport/city ke coordinates available nahi hain.';out.classList.add('error');return;}
-    out.textContent='Google Maps se driving distance calculate ho rahi hai…';
-    const btn=$('#homeSubmit');btn.disabled=true;
-    try{const distance=await googleDrivingDistance([cityPoint,airportPoint]);const params=new URLSearchParams({mode:'airport',airportCity:city,airportDirection:direction,airport,distanceKm:String(distance)});go(params);}catch(e){console.error(e);out.textContent=e.message||'Distance calculate nahi ho paaya.';out.classList.add('error');}finally{btn.disabled=false;}
+    if(!city||!direction||!airport) return fail('Airport city, direction aur airport select karein.');
+    if(!getCoord(city)||!getCoord(airport)) return fail('Selected airport/city ke coordinates available nahi hain.');
+    return openInlineBooking({mode:'airport',airportCity:city,airportDirection:direction,airport,phone});
   });
   renderHomeServiceFields();
   loadServiceCities().finally(populateHomeCityList);
@@ -174,7 +190,7 @@ function getCoord(name){if(CITY_COORDS[name])return {lat:CITY_COORDS[name][0],ln
 function haversine(a,b){const R=6371,rad=x=>x*Math.PI/180;const dLat=rad(b.lat-a.lat),dLon=rad(b.lng-a.lng);const x=Math.sin(dLat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 function approximateDistance(points){let km=0;for(let i=0;i<points.length-1;i++)km+=haversine(points[i],points[i+1]);return Math.max(1,Math.round(km*1.18));}
 function routePointsForMode(mode){
-  if(mode==='outstation') return [$('#pickup')?.value,$('#destination')?.value].map(getCoord).filter(Boolean);
+  if(mode==='outstation') return [$('#pickup')?.value,...(window.__tmExtraCities||[]),$('#destination')?.value].map(getCoord).filter(Boolean);
   if(mode==='airport'){const city=$('#airportCity')?.value, airport=$('#airport')?.value;return [getCoord(city),getCoord(airport)].filter(Boolean);}
   return [];
 }
@@ -284,5 +300,7 @@ async function initBook(){
   if($('#returnDateTime'))$('#returnDateTime').value=new Date(Date.now()+86400000).toISOString().slice(0,16);
 }
 function initGeneric(){setupNav();}
-if($('#estimateBtn'))initBook();else if($('#homeSubmit'))initHome();else initGeneric();
+if($('#homeSubmit'))initHome();
+if($('#estimateBtn'))initBook();
+if(!$('#homeSubmit')&&!$('#estimateBtn'))initGeneric();
 window.__tmAppReady=true;
