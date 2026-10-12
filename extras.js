@@ -2,7 +2,7 @@
    Contact details + policies + Driver Partner registration. Reads the same
    Firestore docs the Admin app edits. Existing booking code stays in app.js. */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js';
-import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
 import { getStorage, ref as sref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js';
 
@@ -233,4 +233,60 @@ function initDriver() {
   });
 }
 
-initContact(); initPolicy(); initDriver();
+
+/* ---------- My Bookings: customer logs in with OTP and sees live status + driver details ---------- */
+function initTrack() {
+  const list = $('#trkList'); if (!list) return;
+  let confirmation = null, recaptcha = null, unsubs = [];
+  const status = (t, ok) => { const e = $('#trkAuthStatus'); e.textContent = t; e.style.color = ok ? '#16833b' : ''; };
+  const money = n => `₹${Math.round(Number(n) || 0).toLocaleString('en-IN')}`;
+  const STATUS_TEXT = {
+    'Searching Driver': 'Arranging your driver', 'Driver Accepted': 'Driver assigned', 'Driver Arriving': 'Driver is arriving',
+    'On the way': 'Trip in progress', 'Trip Started': 'Trip in progress', 'Started': 'Trip in progress',
+    'Awaiting Confirmation': 'Trip completed', 'Completed': 'Trip completed', 'Cancelled': 'Cancelled', 'Ongoing': 'Booking confirmed'
+  };
+  const rides = new Map(), actives = new Map();
+  function render() {
+    const items = [...rides.values()].sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    if (!items.length) { list.innerHTML = '<p class="small">No bookings found for this number yet.</p>'; return; }
+    list.innerHTML = items.map(r => {
+      const a = actives.get(r.id) || {};
+      const st = a.rideStatus || r.rideStatus || r.status || 'Ongoing';
+      const driver = a.driver || r.driver; const hasDriver = driver && driver !== 'Not Assigned';
+      const dphone = String(a.driverPhone || r.driverPhone || '').replace(/\D/g, '').slice(-10);
+      const vehicle = a.assignedVehicle || a.cabType || '';
+      const total = Number(r.amount || 0), paid = Number(r.advancePaid || 0);
+      return `<div class="feature" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><b style="margin:0">${esc(r.id)}</b><span style="background:#ffcc00;color:#111;font-weight:900;font-size:12px;padding:6px 11px;border-radius:999px">${esc(STATUS_TEXT[st] || st)}</span></div>
+      <p style="margin-top:10px"><b style="display:inline;font-size:14px">${esc(r.from || '')}${r.to && r.to !== r.from ? ' → ' + esc(r.to) : ''}</b></p>
+      <p style="margin-top:6px">${esc(r.date || '')}${a.pickupTime ? ' · ' + esc(a.pickupTime) : ''}${vehicle ? ' · ' + esc(vehicle) : ''}</p>
+      <p style="margin-top:6px">Total fare ${money(total)} · Advance paid ${money(paid)} · Balance to pay driver ${money(Math.max(0, total - paid))}</p>
+      <p style="margin-top:10px;color:#111">${hasDriver ? `<b style="display:inline">Driver:</b> ${esc(driver)}${dphone ? ` · <a href="tel:+91${dphone}" style="font-weight:800">+91 ${dphone}</a>` : ''}` : (st === 'Cancelled' ? 'This booking was cancelled.' : 'Thank you for booking with Taxi Mela. We are arranging your driver and will share the details here shortly.')}</p></div>`;
+    }).join('');
+  }
+  function listen(phone) {
+    unsubs.forEach(u => u()); unsubs = [];
+    unsubs.push(onSnapshot(query(collection(db, 'rides'), where('customerPhone', '==', phone)), s => { rides.clear(); s.forEach(d => rides.set(String(d.data().id || d.id), { ...d.data(), id: String(d.data().id || d.id) })); render(); }, e => { console.warn(e); list.innerHTML = '<p class="small">Could not load your bookings. Please try again.</p>'; }));
+    unsubs.push(onSnapshot(query(collection(db, 'activeRides'), where('customerPhone', '==', phone)), s => { actives.clear(); s.forEach(d => actives.set(String(d.data().id || d.id), d.data())); render(); }, e => console.warn(e)));
+  }
+  $('#trkSendOtp').addEventListener('click', async () => {
+    try {
+      const phone = $('#trkPhone').value.replace(/\D/g, '');
+      if (phone.length !== 10) throw new Error('Please enter a valid 10-digit mobile number.');
+      if (!recaptcha) { recaptcha = new RecaptchaVerifier(auth, 'trkRecaptcha', { size: 'normal' }); await recaptcha.render(); }
+      confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, recaptcha);
+      $('#trkOtp').classList.remove('hidden'); $('#trkVerify').disabled = false; $('#trkSendOtp').disabled = true;
+      status('OTP sent. Enter the 6-digit OTP.');
+    } catch (e) { console.error(e); status(e.message || 'Could not send OTP.'); try { recaptcha?.clear(); recaptcha = null; } catch { } }
+  });
+  $('#trkVerify').addEventListener('click', async () => {
+    try {
+      if (!confirmation) throw new Error('Send OTP first.');
+      await confirmation.confirm($('#trkOtp').value.trim());
+      status('Phone verified ✓', true); $('#trkPhone').readOnly = true;
+      $('#trkResults').classList.remove('hidden'); list.innerHTML = '<p class="small">Loading your bookings…</p>';
+      listen(auth.currentUser.phoneNumber.replace('+91', ''));
+    } catch (e) { console.error(e); status('Invalid OTP. Please try again.'); }
+  });
+}
+
+initContact(); initPolicy(); initDriver(); initTrack();
