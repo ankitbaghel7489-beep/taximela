@@ -9,5 +9,5 @@ window.TAXIMELA_CONFIG = {
   },
   googleMapsBrowserKey: "REPLACE_WITH_HTTP_REFERRER_RESTRICTED_MAPS_JS_KEY",
   functionsRegion: "asia-south1",
-  razorpayKeyId: "rzp_live_TlVibLyJVmOjgq"
+  razorpayKeyId: "rzp_live_TneTaTqezRtcyJ"
 };
