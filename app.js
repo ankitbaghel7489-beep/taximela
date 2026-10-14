@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js';
-import { getFirestore, doc, getDoc, collection, addDoc, query, where, getDocs, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, where, getDocs, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-functions.js';
 
@@ -282,10 +282,21 @@ async function pay(){
     if(cp.discount>0)$('#paymentStatus').textContent=`Coupon applied! You saved ${money(cp.discount)}. Creating secure payment order…`;
     const order=await createOrder(payable);const orderId=order.orderId||order.id;const amountPaise=Number(order.amount||Math.round(payState.paid*100));const rzp=new Razorpay({key:order.keyId||key,amount:amountPaise,currency:'INR',order_id:orderId,name:'Taxi Mela',description:`${$('#pickup')?.value||$('#localCity')?.value||$('#airportCity')?.value||''} to ${$('#destination')?.value||$('#airport')?.value||''}`,prefill:{name:$('#customerName').value,contact:$('#customerPhone').value,email:$('#customerEmail').value},theme:{color:'#ffcc00'},handler:async response=>{try{const verified=await verifyRazorpayPaymentFn({orderId:response.razorpay_order_id||response.orderId,paymentId:response.razorpay_payment_id||response.paymentId,signature:response.razorpay_signature||response.signature});if(verified.data?.verified!==true)throw new Error('Payment verification failed.');await createBooking(response.razorpay_payment_id||response.paymentId);}catch(e){console.error(e);$('#paymentStatus').textContent=e.message||'Payment verification failed.';$('#payBtn').disabled=false;}}});rzp.on('payment.failed',e=>{$('#paymentStatus').textContent=e.error?.description||'Payment failed.';$('#payBtn').disabled=false});rzp.open();}catch(e){console.error(e);$('#paymentStatus').textContent=e.message||'Could not start payment.';$('#payBtn').disabled=false;}
 }
+async function ensureCustomerRecord(phone,name){
+  // Same fields the Customer App writes, so the Admin app lists website customers too.
+  try{
+    const ref=doc(db,'customers',phone);
+    const snap=await getDoc(ref);
+    if(!snap.exists()){
+      await setDoc(ref,{name,phone,whatsapp:phone,email:'',trips:0,cancelledRides:0,rating:0,lastBooking:'—',status:'Active',referralCount:0,createdAt:serverTimestamp(),source:'website'});
+    }
+  }catch(e){console.warn('customer record',e)}
+}
 async function createBooking(paymentId){
   const mode=activeMode();const now=new Date();const bookingId=`TM${String(now.getTime()).slice(-10)}`;const name=$('#customerName').value.trim()||'Customer';const phone=$('#customerPhone').value.replace(/\D/g,'');const from=mode==='outstation'?$('#pickup').value:(mode==='local'?$('#localCity').value:$('#airportCity').value);const to=mode==='outstation'?$('#destination').value:mode==='local'?from:$('#airport').value;const addrTyped=($('#pickupAddress')?.value||'').trim();const fullAddr=addrTyped?`${addrTyped}, ${from}`:from;
   const pickupDt=$('#pickupDateTime').value?new Date($('#pickupDateTime').value):now;const returnDt=$('#returnDateTime').value?new Date($('#returnDateTime').value):null;const paymentMethod='Razorpay';
   try{
+    await ensureCustomerRecord(phone,name);
     const ride=await addDoc(collection(db,'rides'),{id:bookingId,customer:name,customerPhone:phone,driver:'Not Assigned',from,to,amount:currentFare.totalFare,baseFare:currentFare.baseFare,hasPet:$('#pet').checked,status:'Ongoing',date:pickupDt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),paymentMethod,advancePaid:payState.paid,couponCode:payState.couponCode,couponDiscount:payState.discount,razorpayPaymentId:paymentId,pickupAddress:fullAddr,createdAt:serverTimestamp()});
     const pts=routePointsForMode(mode);const active=await addDoc(collection(db,'activeRides'),{id:bookingId,customer:name,customerPhone:phone,driver:null,pickup:from,pickupLat:pts[0]?.lat??null,pickupLng:pts[0]?.lng??null,destination:to,pickupAddress:fullAddr,distance:`${Math.round(currentFare.distanceKm||0)} km`,fare:currentFare.totalFare,baseFare:currentFare.baseFare,hasPet:$('#pet').checked,platformFee:currentFare.totalFare*(num(pricing.commissionPercent)/100),paymentStatus:'Paid',rideStatus:'Searching Driver',liveLocation:'—',paymentMethod,cabType:$('#category').value,extraPerKm:0,tollIncluded:$('#toll').value==='tollIncl',tollRate:num(pricing.rates?.[$('#category').value]?.[$('#toll').value]),parkingPaidBy:'Customer',isLocal:mode!=='outstation',bookingType:mode,isOneWay:selectedTrip()==='oneway',totalDistance:Math.round(currentFare.distanceKm||0),pickupDate:`${pickupDt.getDate()}/${pickupDt.getMonth()+1}/${pickupDt.getFullYear()}`,pickupTime:pickupDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}),returnDate:returnDt?`${returnDt.getDate()}/${returnDt.getMonth()+1}/${returnDt.getFullYear()}`:null,returnTime:returnDt?returnDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):null,nightCharge:num(currentFare.nightCharge),requestedVehicle:$('#category').value,assignedVehicle:$('#category').value,matchType:'Exact',customerApproval:'Not Required',razorpayPaymentId:paymentId,createdAt:serverTimestamp()});
     if(payState.docId){try{await applyPromoCodeFn({promoDocId:payState.docId});}catch(e){console.warn('promo usage',e)}}
