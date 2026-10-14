@@ -7,11 +7,12 @@ const cfg = window.TAXIMELA_CONFIG;
 const firebaseApp = initializeApp(cfg.firebase);
 const db = getFirestore(firebaseApp);
 const auth = getAuth(firebaseApp);
-const functions = getFunctions(firebaseApp, cfg.functionsRegion || 'asia-south1');
-const estimateFareFn = httpsCallable(functions, 'estimateFare');
-const createRazorpayOrderFn = httpsCallable(functions, 'createRazorpayOrder');
-const verifyRazorpayPaymentFn = httpsCallable(functions, 'verifyRazorpayPayment');
-const applyPromoCodeFn = httpsCallable(functions, 'applyPromoCode');
+const functionsAsia = getFunctions(firebaseApp, 'asia-south1');
+const functionsUs = getFunctions(firebaseApp, 'us-central1');
+const estimateFareFn = httpsCallable(functionsAsia, 'estimateFare');
+const createRazorpayOrderFn = httpsCallable(functionsUs, 'createRazorpayOrder');
+const verifyRazorpayPaymentFn = httpsCallable(functionsUs, 'verifyRazorpayPayment');
+const applyPromoCodeFn = httpsCallable(functionsUs, 'applyPromoCode');
 let payState = {couponCode:'',discount:0,docId:null,paid:0};
 
 const $ = (s, root=document) => root.querySelector(s);
