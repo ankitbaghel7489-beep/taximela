@@ -200,8 +200,13 @@ function routePointsForMode(mode){
 function activeMode(){return $('.tab.active')?.dataset.mode||'outstation';}
 function tripType(){return activeMode();}
 function selectedTrip(){return $('.radio.active')?.dataset.trip||'oneway';}
+function localDT(d){const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;}
 function validateBasics(){
   const mode=activeMode();
+  const pdv=$('#pickupDateTime')?.value;
+  if(pdv && new Date(pdv).getTime()<Date.now()-60000) throw new Error('Pickup date & time must be in the future.');
+  const rdv=$('#returnDateTime')?.value;
+  if(mode==='outstation' && selectedTrip()==='roundtrip' && rdv && pdv && new Date(rdv)<=new Date(pdv)) throw new Error('Return date & time must be after pickup.');
   if(mode==='outstation' && (!$('#pickup').value||!$('#destination').value)) throw new Error('Please select pickup city and destination city.');
   if(mode==='local' && !$('#localCity').value) throw new Error('Please select the city for local rental.');
   if(mode==='airport' && (!$('#airportCity').value||!$('#airport').value||!$('#airportDirection').value)) throw new Error('Please select city, airport and transfer direction.');
@@ -213,7 +218,7 @@ function payloadForEstimate(){
   if(mode==='outstation' && points.length<2) throw new Error('Route coordinates are unavailable for the selected cities.');
   if(mode==='airport' && points.length<2) throw new Error('Airport/city coordinates are unavailable.');
   if(mode==='local' && ![20,40,80,120].includes(num($('#package')?.value))) throw new Error('Please select a local package.');
-  const dt=$('#pickupDateTime').value||new Date().toISOString().slice(0,16); const ret=$('#returnDateTime').value||'';
+  const dt=$('#pickupDateTime').value||localDT(new Date()); const ret=$('#returnDateTime').value||'';
   return {tripType:mode,category:$('#category').value,tollMode:$('#toll').value,packageKm:num($('#package')?.value),extraHours:num($('#extraHours')?.value),pet:$('#pet').checked,pickupDateTime:new Date(dt).toISOString(),returnDateTime:ret?new Date(ret).toISOString():null,routePoints:points,distanceMultiplier:mode==='outstation'&&selectedTrip()==='roundtrip'?1.8:1,isOneWay:mode==='outstation'?selectedTrip()==='oneway':true};
 }
 function fallbackFare(){ throw new Error('Live fare service is unavailable. Please try again after the Firebase function is deployed.'); }
@@ -249,7 +254,7 @@ function setupNav(){/* hamburger menu ab ui.js me hai */}
 function initAuth(){
   const send=$('#sendOtpBtn'); if(!send)return;
   send.addEventListener('click',async()=>{try{const phone=$('#customerPhone').value.replace(/\D/g,'');if(!$('#customerName').value.trim())throw new Error('Please enter your name.');if(phone.length!==10)throw new Error('Enter a valid 10-digit mobile number.');if(!recaptcha){recaptcha=new RecaptchaVerifier(auth,'recaptcha-container',{size:'normal'});await recaptcha.render();}const confirmationResult=await signInWithPhoneNumber(auth,`+91${phone}`,recaptcha);confirmation=confirmationResult;$('#otp').classList.remove('hidden');$('#verifyOtpBtn').disabled=false;$('#authStatus').textContent='OTP sent. Enter the 6-digit OTP.';send.disabled=true;}catch(e){console.error(e);$('#authStatus').textContent=e.message||'Could not send OTP.';try{recaptcha?.clear();recaptcha=null;}catch{}}});
-  $('#verifyOtpBtn')?.addEventListener('click',async()=>{try{if(!confirmation)throw new Error('Send OTP first.');await confirmation.confirm($('#otp').value.trim());$('#authStatus').textContent='Phone verified ✓';$('#customerPhone').readOnly=true;$('#authStatus').style.color='#16833b';hideMsg();if(currentFare){$('#paymentBlock').classList.remove('hidden');$('#payBtn').disabled=false;}else{await estimate();}}catch(e){$('#authStatus').textContent='Invalid OTP. Please try again.';}});
+  $('#verifyOtpBtn')?.addEventListener('click',async()=>{try{if(!confirmation)throw new Error('Send OTP first.');await confirmation.confirm($('#otp').value.trim());$('#authStatus').textContent='Phone verified ✓';try{await ensureCustomerRecord($('#customerPhone').value.replace(/\D/g,''),$('#customerName').value.trim());}catch(_){}$('#customerPhone').readOnly=true;$('#authStatus').style.color='#16833b';hideMsg();if(currentFare){$('#paymentBlock').classList.remove('hidden');$('#payBtn').disabled=false;}else{await estimate();}}catch(e){$('#authStatus').textContent='Invalid OTP. Please try again.';}});
 }
 async function resolveCoupon(advance){
   const code=($('#couponCode')?.value||'').trim().toUpperCase();
@@ -269,6 +274,7 @@ async function checkCustomerBlocked(phone){
 async function createOrder(amount){const result=await createRazorpayOrderFn({amountPaise:Math.round(amount*100),amount:Math.round(amount*100)});return result.data;}
 async function pay(){
   if(!currentFare) return msg('Calculate the fare first.'); if(!auth.currentUser) return msg('Please verify your phone number first.');
+  try{validateBasics();}catch(e){return msg(e.message);}
   if((($('#pickupAddress')?.value)||'').trim().length<5){$('#paymentStatus').textContent='Please enter your exact pickup address before paying.';$('#pickupAddress')?.focus();return;}
   const key=cfg.razorpayKeyId;if(!key||key.startsWith('REPLACE'))return msg('Razorpay Key ID is not configured in config.js.');
   $('#payBtn').disabled=true;$('#paymentStatus').textContent='Creating secure payment order…';
@@ -297,8 +303,8 @@ async function createBooking(paymentId){
   const pickupDt=$('#pickupDateTime').value?new Date($('#pickupDateTime').value):now;const returnDt=$('#returnDateTime').value?new Date($('#returnDateTime').value):null;const paymentMethod='Razorpay';
   try{
     await ensureCustomerRecord(phone,name);
-    const ride=await addDoc(collection(db,'rides'),{id:bookingId,customer:name,customerPhone:phone,driver:'Not Assigned',from,to,amount:currentFare.totalFare,baseFare:currentFare.baseFare,hasPet:$('#pet').checked,status:'Ongoing',date:pickupDt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),paymentMethod,advancePaid:payState.paid,couponCode:payState.couponCode,couponDiscount:payState.discount,razorpayPaymentId:paymentId,pickupAddress:fullAddr,createdAt:serverTimestamp()});
-    const pts=routePointsForMode(mode);const active=await addDoc(collection(db,'activeRides'),{id:bookingId,customer:name,customerPhone:phone,driver:null,pickup:from,pickupLat:pts[0]?.lat??null,pickupLng:pts[0]?.lng??null,destination:to,pickupAddress:fullAddr,distance:`${Math.round(currentFare.distanceKm||0)} km`,fare:currentFare.totalFare,baseFare:currentFare.baseFare,hasPet:$('#pet').checked,platformFee:currentFare.totalFare*(num(pricing.commissionPercent)/100),paymentStatus:'Paid',rideStatus:'Searching Driver',liveLocation:'—',paymentMethod,cabType:$('#category').value,extraPerKm:0,tollIncluded:$('#toll').value==='tollIncl',tollRate:num(pricing.rates?.[$('#category').value]?.[$('#toll').value]),parkingPaidBy:'Customer',isLocal:mode!=='outstation',bookingType:mode,isOneWay:selectedTrip()==='oneway',totalDistance:Math.round(currentFare.distanceKm||0),pickupDate:`${pickupDt.getDate()}/${pickupDt.getMonth()+1}/${pickupDt.getFullYear()}`,pickupTime:pickupDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}),returnDate:returnDt?`${returnDt.getDate()}/${returnDt.getMonth()+1}/${returnDt.getFullYear()}`:null,returnTime:returnDt?returnDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):null,nightCharge:num(currentFare.nightCharge),requestedVehicle:$('#category').value,assignedVehicle:$('#category').value,matchType:'Exact',customerApproval:'Not Required',razorpayPaymentId:paymentId,createdAt:serverTimestamp()});
+    const ride=await addDoc(collection(db,'rides'),{id:bookingId,customer:name,customerPhone:phone,driver:'Not Assigned',from,to,amount:currentFare.totalFare,baseFare:currentFare.baseFare,hasPet:$('#pet').checked,status:'Ongoing',date:pickupDt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),paymentMethod,advancePaid:payState.paid,couponCode:payState.couponCode,couponDiscount:payState.discount,razorpayPaymentId:paymentId,pickupAddress:fullAddr,cabType:$('#category').value,bookingType:mode,tripType:(mode==='outstation'?selectedTrip():mode),pickupDateTime:pickupDt.toISOString(),pickupDate:`${pickupDt.getDate()}/${pickupDt.getMonth()+1}/${pickupDt.getFullYear()}`,pickupTime:pickupDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}),returnDateTime:returnDt?returnDt.toISOString():null,tollMode:$('#toll').value,tollLabel:$('#toll').value==='tollIncl'?'Toll + State Tax Included':'Toll + State Tax Excluded',parkingPaidBy:'Customer',distanceKm:Math.round(currentFare.distanceKm||0),source:'website',createdAt:serverTimestamp()});
+    const pts=routePointsForMode(mode);const active=await addDoc(collection(db,'activeRides'),{id:bookingId,customer:name,customerPhone:phone,driver:null,pickup:from,pickupLat:pts[0]?.lat??null,pickupLng:pts[0]?.lng??null,destination:to,pickupAddress:fullAddr,distance:`${Math.round(currentFare.distanceKm||0)} km`,fare:currentFare.totalFare,baseFare:currentFare.baseFare,hasPet:$('#pet').checked,platformFee:currentFare.totalFare*(num(pricing.commissionPercent)/100),paymentStatus:'Paid',rideStatus:'Searching Driver',liveLocation:'—',paymentMethod,cabType:$('#category').value,extraPerKm:0,tollIncluded:$('#toll').value==='tollIncl',tollRate:num(pricing.rates?.[$('#category').value]?.[$('#toll').value]),parkingPaidBy:'Customer',source:'website',pickupDateTime:pickupDt.toISOString(),isLocal:mode!=='outstation',bookingType:mode,isOneWay:selectedTrip()==='oneway',totalDistance:Math.round(currentFare.distanceKm||0),pickupDate:`${pickupDt.getDate()}/${pickupDt.getMonth()+1}/${pickupDt.getFullYear()}`,pickupTime:pickupDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}),returnDate:returnDt?`${returnDt.getDate()}/${returnDt.getMonth()+1}/${returnDt.getFullYear()}`:null,returnTime:returnDt?returnDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):null,nightCharge:num(currentFare.nightCharge),requestedVehicle:$('#category').value,assignedVehicle:$('#category').value,matchType:'Exact',customerApproval:'Not Required',razorpayPaymentId:paymentId,createdAt:serverTimestamp()});
     if(payState.docId){try{await applyPromoCodeFn({promoDocId:payState.docId});}catch(e){console.warn('promo usage',e)}}
     currentBooking={docId:active.id,bookingId};showStatus(active.id,bookingId,from,to,$('#category').value,currentFare.totalFare);toast('Booking confirmed successfully.');
   }catch(e){console.error(e);$('#paymentStatus').textContent=`Payment verified, but booking creation failed: ${e.message}`;$('#payBtn').disabled=false;}
@@ -341,8 +347,8 @@ async function initBook(){
   if(params.get('package')&&$('#package'))$('#package').value=params.get('package');
   if(phone&&$('#customerPhone'))$('#customerPhone').value=phone;
   if(params.get('trip')==='roundtrip')$('.radio[data-trip="roundtrip"]')?.click();
-  if($('#pickupDateTime'))$('#pickupDateTime').value=new Date(Date.now()+3600000).toISOString().slice(0,16);
-  if($('#returnDateTime'))$('#returnDateTime').value=new Date(Date.now()+86400000).toISOString().slice(0,16);
+  if($('#pickupDateTime'))$('#pickupDateTime').value=localDT(new Date(Date.now()+3600000));$('#pickupDateTime').min=localDT(new Date());
+  if($('#returnDateTime'))$('#returnDateTime').value=localDT(new Date(Date.now()+86400000));$('#returnDateTime').min=localDT(new Date());
 }
 function initGeneric(){setupNav();}
 if($('#homeSubmit'))initHome();
