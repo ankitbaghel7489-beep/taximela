@@ -35,9 +35,10 @@ const CITY_COORDS = {
   Lucknow:[26.8467,80.9462],Chandigarh:[30.7333,76.7794],Amritsar:[31.634,74.8723],Haridwar:[29.9457,78.1642],
   Dehradun:[30.3165,78.0322],Hyderabad:[17.385,78.4867],Bengaluru:[12.9716,77.5946],Chennai:[13.0827,80.2707],Kolkata:[22.5726,88.3639]
 };
-const AIRPORT_COORDS = {
-  'Devi Ahilya Bai Holkar Airport':[22.7225,75.8011], 'Raja Bhoj Airport':[23.2875,77.3374], 'Sardar Vallabhbhai Patel Airport':[23.0772,72.6347]
-};
+const AIRPORTS = [["Delhi – Indira Gandhi International Airport", 28.5562, 77.1, "Delhi"], ["Noida – Noida International Airport (Jewar)", 28.1665, 77.6153, "Noida"], ["Ghaziabad – Hindon Airport", 28.7003, 77.4125, "Ghaziabad"], ["Mumbai – Chhatrapati Shivaji Maharaj International Airport", 19.0896, 72.8656, "Mumbai"], ["Navi Mumbai – Navi Mumbai International Airport", 18.9979, 73.0714, "Navi Mumbai"], ["Pune – Pune Airport", 18.5822, 73.9197, "Pune"], ["Nagpur – Dr. Babasaheb Ambedkar International Airport", 21.0922, 79.0472, "Nagpur"], ["Nashik – Ozar Airport", 20.1191, 73.9129, "Nashik"], ["Aurangabad – Chikalthana Airport", 19.8627, 75.3981, "Aurangabad"], ["Kolhapur – Kolhapur Airport", 16.6647, 74.2894, "Kolhapur"], ["Shirdi – Shirdi Airport", 19.6886, 74.3789, "Shirdi"], ["Nanded – Nanded Airport", 19.1833, 77.3167, "Nanded"], ["Solapur – Solapur Airport", 17.6281, 75.9348, "Solapur"], ["Jalgaon – Jalgaon Airport", 20.9627, 75.6259, "Jalgaon"], ["Sindhudurg – Sindhudurg Airport (Chipi)", 16.001, 73.526, "Sindhudurg"], ["Goa – Goa International Airport (Dabolim)", 15.3808, 73.8314, "Goa"], ["Goa – Manohar International Airport (Mopa)", 15.713, 73.864, "Goa"], ["Bengaluru – Kempegowda International Airport", 13.1986, 77.7066, "Bengaluru"], ["Mysuru – Mysuru Airport", 12.23, 76.6558, "Mysuru"], ["Mangaluru – Mangaluru International Airport", 12.9613, 74.8901, "Mangaluru"], ["Hubballi – Hubballi Airport", 15.3617, 75.0849, "Hubballi"], ["Belagavi – Belagavi Airport", 15.8593, 74.6183, "Belagavi"], ["Kalaburagi – Kalaburagi Airport", 17.3074, 76.9583, "Kalaburagi"], ["Shivamogga – Shivamogga Airport", 13.8578, 75.619, "Shivamogga"], ["Ballari – Vijayanagar Airport (Ballari)", 15.1762, 76.6347, "Ballari"], ["Chennai – Chennai International Airport", 12.9941, 80.1709, "Chennai"], ["Coimbatore – Coimbatore International Airport", 11.03, 77.0434, "Coimbatore"], ["Madurai – Madurai Airport", 9.8345, 78.0934, "Madurai"], ["Tiruchirappalli – Tiruchirappalli International Airport", 10.7654, 78.7097, "Tiruchirappalli"], ["Salem – Salem Airport", 11.7833, 78.0656, "Salem"], ["Thoothukudi – Tuticorin Airport", 8.7243, 78.0258, "Thoothukudi"], ["Puducherry – Puducherry Airport", 11.968, 79.812, "Puducherry"], ["Kochi – Cochin International Airport", 10.152, 76.4019, "Kochi"], ["Thiruvananthapuram – Trivandrum International Airport", 8.4821, 76.9201, "Thiruvananthapuram"], ["Kozhikode – Calicut International Airport", 11.1368, 75.9553, "Kozhikode"], ["Kannur – Kannur International Airport", 11.9186, 75.5472, "Kannur"], ["Hyderabad – Rajiv Gandhi International Airport", 17.2403, 78.4294, "Hyderabad"], ["Vijayawada – Vijayawada Airport", 16.5304, 80.7968, "Vijayawada"], ["Visakhapatnam – Visakhapatnam Airport", 17.7212, 83.2245, "Visakhapatnam"], ["Tirupati – Tirupati Airport", 13.6325, 79.5433, "Tirupati"], ["Rajahmundry – Rajahmundry Airport", 17.1104, 81.8182, "Rajahmundry"], ["Kadapa – Kadapa Airport", 14.51, 78.7728, "Kadapa"], ["Kurnool – Kurnool Airport (Orvakal)", 15.7113, 78.1706, "Kurnool"], ["Kolkata – Netaji Subhas Chandra Bose International Airport", 22.6547, 88.4467, "Kolkata"], ["Bagdogra – Bagdogra Airport", 26.6812, 88.3286, "Bagdogra"], ["Cooch Behar – Cooch Behar Airport", 26.3305, 89.4672, "Cooch Behar"], ["Durgapur – Kazi Nazrul Islam Airport (Andal)", 23.6225, 87.243, "Durgapur"], ["Bhubaneswar – Biju Patnaik International Airport", 20.2444, 85.8178, "Bhubaneswar"], ["Jharsuguda – Veer Surendra Sai Airport", 21.9135, 84.0504, "Jharsuguda"], ["Patna – Jay Prakash Narayan International Airport", 25.5913, 85.088, "Patna"], ["Gaya – Gaya Airport", 24.7443, 84.9512, "Gaya"], ["Darbhanga – Darbhanga Airport", 26.1947, 85.9174, "Darbhanga"], ["Ranchi – Birsa Munda Airport", 23.3143, 85.3217, "Ranchi"], ["Jamshedpur – Sonari Airport", 22.8132, 86.1693, "Jamshedpur"], ["Deoghar – Deoghar Airport", 24.4452, 86.7087, "Deoghar"], ["Raipur – Swami Vivekananda Airport", 21.1804, 81.7388, "Raipur"], ["Bilaspur – Bilaspur Airport (Chakarbhata)", 21.9885, 82.111, "Bilaspur"], ["Jagdalpur – Jagdalpur Airport", 19.0743, 82.0368, "Jagdalpur"], ["Indore – Devi Ahilya Bai Holkar Airport", 22.7225, 75.8011, "Indore"], ["Bhopal – Raja Bhoj Airport", 23.2875, 77.3374, "Bhopal"], ["Jabalpur – Jabalpur Airport (Dumna)", 23.1778, 80.052, "Jabalpur"], ["Gwalior – Rajmata Vijaya Raje Scindia Airport", 26.2933, 78.2278, "Gwalior"], ["Khajuraho – Khajuraho Airport", 24.8172, 79.9186, "Khajuraho"], ["Rewa – Rewa Airport", 24.5023, 81.1198, "Rewa"], ["Satna – Satna Airport", 24.562, 80.855, "Satna"], ["Jaipur – Jaipur International Airport", 26.8242, 75.8122, "Jaipur"], ["Jodhpur – Jodhpur Airport", 26.2511, 73.0489, "Jodhpur"], ["Udaipur – Maharana Pratap Airport", 24.6177, 73.8961, "Udaipur"], ["Jaisalmer – Jaisalmer Airport", 26.8887, 70.865, "Jaisalmer"], ["Bikaner – Bikaner Airport", 28.0706, 73.2072, "Bikaner"], ["Kota – Kota Airport", 25.16, 75.8456, "Kota"], ["Ajmer – Kishangarh Airport", 26.6011, 74.8142, "Ajmer"], ["Ahmedabad – Sardar Vallabhbhai Patel Airport", 23.0772, 72.6347, "Ahmedabad"], ["Surat – Surat Airport", 21.1141, 72.7418, "Surat"], ["Vadodara – Vadodara Airport", 22.3362, 73.2263, "Vadodara"], ["Rajkot – Rajkot Airport (Hirasar)", 22.3792, 71.045, "Rajkot"], ["Bhavnagar – Bhavnagar Airport", 21.7522, 72.1852, "Bhavnagar"], ["Bhuj – Bhuj Airport", 23.2878, 69.6702, "Bhuj"], ["Jamnagar – Jamnagar Airport", 22.4655, 70.0126, "Jamnagar"], ["Porbandar – Porbandar Airport", 21.6487, 69.6572, "Porbandar"], ["Diu – Diu Airport", 20.7131, 70.9211, "Diu"], ["Kandla – Kandla Airport", 23.1127, 70.1003, "Kandla"], ["Lucknow – Chaudhary Charan Singh International Airport", 26.7606, 80.8893, "Lucknow"], ["Varanasi – Lal Bahadur Shastri Airport", 25.4524, 82.8593, "Varanasi"], ["Ayodhya – Maharishi Valmiki International Airport", 26.4198, 82.1558, "Ayodhya"], ["Kanpur – Kanpur Airport (Chakeri)", 26.4041, 80.4102, "Kanpur"], ["Prayagraj – Prayagraj Airport", 25.4401, 81.7339, "Prayagraj"], ["Gorakhpur – Gorakhpur Airport", 26.7397, 83.4497, "Gorakhpur"], ["Kushinagar – Kushinagar International Airport", 26.7753, 83.8855, "Kushinagar"], ["Agra – Pandit Deen Dayal Upadhyay Airport (Kheria)", 27.1558, 77.9609, "Agra"], ["Dehradun – Jolly Grant Airport", 30.1897, 78.1803, "Dehradun"], ["Pantnagar – Pantnagar Airport", 29.0334, 79.4737, "Pantnagar"], ["Chandigarh – Shaheed Bhagat Singh International Airport", 30.6735, 76.7885, "Chandigarh"], ["Amritsar – Sri Guru Ram Dass Jee International Airport", 31.7096, 74.7973, "Amritsar"], ["Ludhiana – Sahnewal Airport", 30.8547, 75.9526, "Ludhiana"], ["Bathinda – Bathinda Airport", 30.2701, 74.7576, "Bathinda"], ["Jalandhar – Adampur Airport", 31.4338, 75.7588, "Jalandhar"], ["Hisar – Hisar Airport", 29.1794, 75.7553, "Hisar"], ["Shimla – Shimla Airport", 31.0818, 77.068, "Shimla"], ["Kullu – Kullu-Manali Airport (Bhuntar)", 31.8767, 77.1544, "Kullu"], ["Dharamshala – Kangra Airport (Gaggal)", 32.1651, 76.2634, "Dharamshala"], ["Srinagar – Srinagar International Airport", 33.9871, 74.7742, "Srinagar"], ["Jammu – Jammu Airport", 32.6891, 74.8374, "Jammu"], ["Leh – Kushok Bakula Rimpochee Airport", 34.1359, 77.5465, "Leh"], ["Guwahati – Lokpriya Gopinath Bordoloi International Airport", 26.1061, 91.5859, "Guwahati"], ["Dibrugarh – Dibrugarh Airport", 27.4839, 95.0169, "Dibrugarh"], ["Jorhat – Jorhat Airport", 26.7315, 94.1755, "Jorhat"], ["Silchar – Silchar Airport", 24.9129, 92.9787, "Silchar"], ["Tezpur – Tezpur Airport", 26.7091, 92.7847, "Tezpur"], ["Lakhimpur – Lilabari Airport", 27.2955, 94.0976, "Lakhimpur"], ["Imphal – Bir Tikendrajit International Airport", 24.76, 93.8967, "Imphal"], ["Agartala – Maharaja Bir Bikram Airport", 23.887, 91.2404, "Agartala"], ["Aizawl – Lengpui Airport", 23.8406, 92.6197, "Aizawl"], ["Dimapur – Dimapur Airport", 25.8839, 93.7711, "Dimapur"], ["Itanagar – Donyi Polo Airport", 27.0956, 93.656, "Itanagar"], ["Shillong – Shillong Airport (Umroi)", 25.7036, 91.9786, "Shillong"], ["Gangtok – Pakyong Airport", 27.2263, 88.586, "Gangtok"], ["Port Blair – Veer Savarkar International Airport", 11.6412, 92.7297, "Port Blair"], ["Agatti – Agatti Airport (Lakshadweep)", 10.8237, 72.176, "Agatti"]];
+const AIRPORT_COORDS = {};
+AIRPORTS.forEach(a=>{AIRPORT_COORDS[a[0]]=[a[1],a[2]];});
+const NEARBY_CITY_KM = 150;
 let pricing = {rates:{}, commissionPercent:15};
 let serviceCities = [];
 let currentFare = null;
@@ -90,7 +91,7 @@ async function googleDrivingDistance(points){
 
 function homeCities(){
   const names=serviceCities.map(x=>String(x.name||x.city||x.cityName||'')).filter(Boolean);
-  return [...new Set([...(names.length?names:[]),...Object.keys(CITY_COORDS)])].sort((a,b)=>a.localeCompare(b));
+  return [...new Set(names)].sort((a,b)=>a.localeCompare(b));
 }
 function populateHomeCityList(){
   const list=$('#homeCities'); if(!list)return;
@@ -172,7 +173,7 @@ function initHome(){
     return openInlineBooking({mode:'airport',airportCity:city,airportDirection:direction,airport,phone});
   });
   renderHomeServiceFields();
-  loadServiceCities().finally(populateHomeCityList);
+  loadServiceCities().finally(()=>{populateHomeCityList();setupAirportUI({dir:'#homeAirportDirection',air:'#homeAirport',city:'#homeAirportCity'});});
 }
 
 function toast(msg){const el=$('#toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),4000)}
@@ -181,7 +182,7 @@ function hideMsg(){ $('#formMsg')?.classList.add('hidden'); }
 function setLoading(btn,on,text='Working…'){if(!btn)return;btn.disabled=on;btn.textContent=on?text:btn.dataset.defaultText||'Continue';}
 function cityOptions(){
   const names=serviceCities.map(x=>String(x.name||x.city||x.cityName||'')).filter(Boolean);
-  const cities=[...new Set([...(names.length?names:[]),...Object.keys(CITY_COORDS)])].sort((a,b)=>a.localeCompare(b));
+  const cities=[...new Set(names)].sort((a,b)=>a.localeCompare(b));
   const list=$('#bookCities');
   if(list) list.innerHTML=cities.map(c=>`<option value="${escapeHtml(c)}"></option>`).join('');
   $$('.city-select').forEach(sel=>{const placeholder=sel.dataset.placeholder||'Select city';const val=sel.value;sel.innerHTML=`<option value="">${placeholder}</option>`+cities.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');if(cities.includes(val))sel.value=val;});
@@ -206,6 +207,7 @@ function validateBasics(){
   const pdv=$('#pickupDateTime')?.value;
   if(pdv && new Date(pdv).getTime()<Date.now()-60000) throw new Error('Pickup date & time must be in the future.');
   const rdv=$('#returnDateTime')?.value;
+  if(mode==='outstation' && selectedTrip()==='roundtrip' && !rdv) throw new Error('Please select the return date & time for a round trip.');
   if(mode==='outstation' && selectedTrip()==='roundtrip' && rdv && pdv && new Date(rdv)<=new Date(pdv)) throw new Error('Return date & time must be after pickup.');
   if(mode==='outstation' && (!$('#pickup').value||!$('#destination').value)) throw new Error('Please select pickup city and destination city.');
   if(mode==='local' && !$('#localCity').value) throw new Error('Please select the city for local rental.');
@@ -218,7 +220,7 @@ function payloadForEstimate(){
   if(mode==='outstation' && points.length<2) throw new Error('Route coordinates are unavailable for the selected cities.');
   if(mode==='airport' && points.length<2) throw new Error('Airport/city coordinates are unavailable.');
   if(mode==='local' && ![20,40,80,120].includes(num($('#package')?.value))) throw new Error('Please select a local package.');
-  const dt=$('#pickupDateTime').value||localDT(new Date()); const ret=$('#returnDateTime').value||'';
+  const dt=$('#pickupDateTime').value||localDT(new Date()); const ret=(mode==='outstation'&&selectedTrip()==='roundtrip')?($('#returnDateTime').value||''):'';
   return {tripType:mode,category:$('#category').value,tollMode:$('#toll').value,packageKm:num($('#package')?.value),extraHours:num($('#extraHours')?.value),pet:$('#pet').checked,pickupDateTime:new Date(dt).toISOString(),returnDateTime:ret?new Date(ret).toISOString():null,routePoints:points,distanceMultiplier:mode==='outstation'&&selectedTrip()==='roundtrip'?1.8:1,isOneWay:mode==='outstation'?selectedTrip()==='oneway':true};
 }
 function fallbackFare(){ throw new Error('Live fare service is unavailable. Please try again after the Firebase function is deployed.'); }
@@ -310,7 +312,7 @@ async function addBookingLead(){
 }
 async function createBooking(paymentId){
   const mode=activeMode();const now=new Date();const bookingId=`TM${String(now.getTime()).slice(-10)}`;const name=$('#customerName').value.trim()||'Customer';const phone=$('#customerPhone').value.replace(/\D/g,'');const from=mode==='outstation'?$('#pickup').value:(mode==='local'?$('#localCity').value:$('#airportCity').value);const to=mode==='outstation'?$('#destination').value:mode==='local'?from:$('#airport').value;const addrTyped=($('#pickupAddress')?.value||'').trim();const fullAddr=addrTyped?`${addrTyped}, ${from}`:from;
-  const pickupDt=$('#pickupDateTime').value?new Date($('#pickupDateTime').value):now;const returnDt=$('#returnDateTime').value?new Date($('#returnDateTime').value):null;const paymentMethod='Razorpay';
+  const pickupDt=$('#pickupDateTime').value?new Date($('#pickupDateTime').value):now;const returnDt=(mode==='outstation'&&selectedTrip()==='roundtrip'&&$('#returnDateTime').value)?new Date($('#returnDateTime').value):null;const paymentMethod='Razorpay';
   try{
     await ensureCustomerRecord(phone,name);
     const ride=await addDoc(collection(db,'rides'),{id:bookingId,customer:name,customerPhone:phone,driver:'Not Assigned',from,to,amount:currentFare.totalFare,baseFare:currentFare.baseFare,hasPet:$('#pet').checked,status:'Ongoing',date:pickupDt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),paymentMethod,advancePaid:payState.paid,couponCode:payState.couponCode,couponDiscount:payState.discount,razorpayPaymentId:paymentId,pickupAddress:fullAddr,cabType:$('#category').value,bookingType:mode,tripType:(mode==='outstation'?selectedTrip():mode),pickupDateTime:pickupDt.toISOString(),pickupDate:`${pickupDt.getDate()}/${pickupDt.getMonth()+1}/${pickupDt.getFullYear()}`,pickupTime:pickupDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}),returnDateTime:returnDt?returnDt.toISOString():null,tollMode:$('#toll').value,tollLabel:$('#toll').value==='tollIncl'?'Toll + State Tax Included':'Toll + State Tax Excluded',parkingPaidBy:'Customer',distanceKm:Math.round(currentFare.distanceKm||0),source:'website',requestedVehicle:$('#category').value,assignedVehicle:$('#category').value,matchType:'Exact',customerApproval:'Not Required',returnDate:returnDt?`${returnDt.getDate()}/${returnDt.getMonth()+1}/${returnDt.getFullYear()}`:null,returnTime:returnDt?returnDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):null,createdAt:serverTimestamp()});
@@ -322,6 +324,37 @@ async function createBooking(paymentId){
 function showStatus(docId,bookingId,from,to,cab,total){$('#statusCard').classList.remove('hidden');$('#bookingIdText').textContent=bookingId;$('#routeText').textContent=`${from} → ${to}`;$('#cabText').textContent=cab;$('#totalText').textContent=money(total);listenStatus(docId);$('#statusCard').scrollIntoView({behavior:'smooth',block:'center'});}
 function normalizeStatus(s){if(s==='Driver Arriving'||s==='Driver Accepted')return 'Driver Arriving';if(s==='On the way'||s==='Trip Started'||s==='Started')return 'On the way';if(s==='Completed'||s==='Awaiting Confirmation')return 'Completed';if(s==='Cancelled')return 'Cancelled';return 'Searching Driver';}
 function listenStatus(docId){onSnapshot(doc(db,'activeRides',docId),snap=>{if(!snap.exists())return;const d=snap.data();const s=normalizeStatus(d.rideStatus||'Searching Driver');$('#statusPill').textContent=d.rideStatus||'Searching Driver';$('#statusTitle').textContent=s==='Cancelled'?'Booking cancelled':s==='Completed'?'Trip completed':'Your booking is live';$$('[data-status-step]').forEach(el=>el.classList.toggle('active',el.dataset.statusStep===s));if(d.driver)$('#cabText').textContent=`${d.driver} · ${d.assignedVehicle||$('#category').value}`;});}
+
+function setupAirportUI(ids){
+  const dirEl=$(ids.dir),airEl=$(ids.air);let cityEl=$(ids.city);
+  if(!dirEl||!airEl||!cityEl||airEl.dataset.tmReady)return;
+  airEl.dataset.tmReady='1';
+  const fld=e=>e.closest('.field,.tm-field');
+  if(cityEl.tagName!=='SELECT'){const sel=document.createElement('select');sel.id=cityEl.id;cityEl.replaceWith(sel);cityEl=sel;}
+  const parent=fld(dirEl)?.parentElement;
+  if(parent&&fld(airEl)&&fld(cityEl)&&fld(airEl).parentElement===parent&&fld(cityEl).parentElement===parent){parent.append(fld(dirEl),fld(airEl),fld(cityEl));}
+  const sorted=[...AIRPORTS].sort((a,b)=>a[0].localeCompare(b[0]));
+  airEl.innerHTML='<option value="">Select Airport</option>'+sorted.map(a=>`<option value="${escapeHtml(a[0])}">${escapeHtml(a[0])}</option>`).join('');
+  const refresh=()=>{
+    const keep=cityEl.value;const ap=AIRPORT_COORDS[airEl.value];
+    const label=dirEl.value==='From Airport'?'Drop city':'Pickup city';
+    if(!ap){cityEl.innerHTML='<option value="">Select airport first</option>';return;}
+    const near=[...new Set(serviceCities.map(x=>String(x.name||x.city||x.cityName||'')).filter(Boolean))].map(n=>{const c=getCoord(n);return c?{n,d:haversine({lat:ap[0],lng:ap[1]},c)}:null;}).filter(x=>x&&x.d<=NEARBY_CITY_KM).sort((a,b)=>a.d-b.d);
+    cityEl.innerHTML=near.length?`<option value="">Select ${label}</option>`+near.map(x=>`<option value="${escapeHtml(x.n)}">${escapeHtml(x.n)}</option>`).join(''):'<option value="">No service city near this airport</option>';
+    if(near.some(x=>x.n===keep))cityEl.value=keep;
+  };
+  airEl.addEventListener('change',refresh);dirEl.addEventListener('change',refresh);
+  refresh();
+  airEl._tmRefresh=refresh;
+}
+function setBookAirportFromParams(params){
+  const d=$('#airportDirection'),a=$('#airport'),c=$('#airportCity');
+  if(d&&params.get('airportDirection'))d.value=params.get('airportDirection');
+  if(a&&params.get('airport')){a.value=params.get('airport');}
+  a?._tmRefresh?.();
+  if(c&&params.get('airportCity'))c.value=params.get('airportCity');
+}
+function syncReturn(){const show=activeMode()==='outstation'&&selectedTrip()==='roundtrip';$('#returnWrap')?.classList.toggle('hidden',!show);}
 function enhanceBookingUI(){
   const toll=$('#toll');
   if(toll){
@@ -346,19 +379,18 @@ async function initBook(){
   const params=new URLSearchParams(location.search);
   const mode=params.get('mode'),category=params.get('category'),pickup=params.get('pickup'),destination=params.get('destination'),phone=params.get('phone');
   if(mode && ['outstation','local','airport'].includes(mode)){const tab=$(`.tab[data-mode="${mode}"]`);tab?.click();}
-  const _init=await Promise.allSettled([loadPricing(),loadServiceCities()]);if(_init[0].status==='rejected'){console.warn('pricing',_init[0].reason);msg(_init[0].reason?.message||'Pricing could not be loaded. Please try again.');}cityOptions();syncCabCategories();
+  const _init=await Promise.allSettled([loadPricing(),loadServiceCities()]);if(_init[0].status==='rejected'){console.warn('pricing',_init[0].reason);msg(_init[0].reason?.message||'Pricing could not be loaded. Please try again.');}cityOptions();syncCabCategories();setupAirportUI({dir:'#airportDirection',air:'#airport',city:'#airportCity'});
   if(category && $('#category') && [...$('#category').options].some(o=>o.value===category))$('#category').value=category;
   if(pickup&&$('#pickup'))$('#pickup').value=pickup;
   if(destination&&$('#destination'))$('#destination').value=destination;
   if(params.get('localCity')&&$('#localCity'))$('#localCity').value=params.get('localCity');
-  if(params.get('airportCity')&&$('#airportCity'))$('#airportCity').value=params.get('airportCity');
-  if(params.get('airportDirection')&&$('#airportDirection'))$('#airportDirection').value=params.get('airportDirection');
-  if(params.get('airport')&&$('#airport'))$('#airport').value=params.get('airport');
+  setBookAirportFromParams(params);
   if(params.get('package')&&$('#package'))$('#package').value=params.get('package');
   if(phone&&$('#customerPhone'))$('#customerPhone').value=phone;
   if(params.get('trip')==='roundtrip')$('.radio[data-trip="roundtrip"]')?.click();
   if($('#pickupDateTime'))$('#pickupDateTime').value=localDT(new Date(Date.now()+3600000));$('#pickupDateTime').min=localDT(new Date());
   if($('#returnDateTime'))$('#returnDateTime').value=localDT(new Date(Date.now()+86400000));$('#returnDateTime').min=localDT(new Date());
+  document.addEventListener('click',()=>setTimeout(syncReturn,0));syncReturn();
 }
 function initGeneric(){setupNav();}
 if($('#homeSubmit'))initHome();
