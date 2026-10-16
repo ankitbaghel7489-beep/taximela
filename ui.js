@@ -59,15 +59,73 @@
   }
   function pick(selector, chosen) { $$(selector).forEach(function (x) { x.classList.toggle('active', x === chosen); }); }
 
+  /* ---------- Extra cities: Round Trip only for 2 cities ---------- */
+  function addExtraCityRow(wrap, listId) {
+    var row = document.createElement('div');
+    row.className = 'tm-extra-city';
+    row.innerHTML = '<span style="width:22px;color:#7e8590">\u2316</span><input list="' + listId + '" placeholder="Search another city" autocomplete="off">';
+    wrap.appendChild(row);
+  }
+  function syncTripLock() {
+    $$('.tm-extra-city').forEach(function (r) {
+      if (!r.querySelector('.tm-extra-remove')) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tm-extra-remove';
+        b.setAttribute('aria-label', 'Remove city');
+        b.textContent = '\u2715';
+        b.style.cssText = 'border:0;background:transparent;font-size:16px;cursor:pointer;color:#7e8590;padding:0 6px';
+        r.appendChild(b);
+      }
+    });
+    var pairs = [
+      ['#homeExtraCities', '.tm-radio[data-home-trip="roundtrip"]', '.tm-radio[data-home-trip="oneway"]', '.tm-radio[data-home-trip]'],
+      ['#bookExtraCities', '.radio[data-trip="roundtrip"]', '.radio[data-trip="oneway"]', '.radio[data-trip]']
+    ];
+    pairs.forEach(function (p) {
+      var has = $$(p[0] + ' input').length > 0;
+      var rt = $(p[1]), ow = $(p[2]);
+      if (!rt) return;
+      rt.style.opacity = has ? '0.4' : '';
+      if (has && rt.classList.contains('active') && ow) {
+        pick(p[3], ow);
+        if (p[0] === '#bookExtraCities') { resetFare(); setHidden('#returnWrap', true); }
+      }
+    });
+  }
+
   /* ---------- Clicks (single delegated listener) ---------- */
   document.addEventListener('click', function (e) {
     var t = e.target, el;
+    setTimeout(syncTripLock, 0);
     if (!t || !t.closest) return;
 
     // Menu
     if (t.closest('.menu')) { e.stopPropagation(); setMenu(!menuIsOpen()); return; }
     if (t.closest('.navlinks a')) { setMenu(false); return; }
     if (menuIsOpen() && !t.closest('.navlinks')) setMenu(false);
+
+    // Extra cities (Book a Ride add / remove / round-trip lock)
+    if (t.closest('#bookAddCity')) {
+      var bw = $('#bookExtraCities');
+      if (bw) addExtraCityRow(bw, 'bookCities');
+      return;
+    }
+    if ((el = t.closest('.tm-extra-remove'))) {
+      var rr = el.closest('.tm-extra-city');
+      if (rr) rr.remove();
+      return;
+    }
+    if (t.closest('.radio[data-trip="roundtrip"]') && $$('#bookExtraCities input').length) {
+      var f2 = $('#formMsg');
+      if (f2) { f2.textContent = 'Round Trip is available only for 2 cities. Remove the extra city to select Round Trip.'; f2.classList.remove('hidden'); }
+      return;
+    }
+    if (t.closest('.tm-radio[data-home-trip="roundtrip"]') && $$('#homeExtraCities input').length) {
+      var d2 = $('#homeDistance');
+      if (d2) { d2.textContent = 'Round Trip is available only for 2 cities. Remove the extra city to select Round Trip.'; d2.classList.add('error'); }
+      return;
+    }
 
     // Home page
     if ((el = t.closest('.tm-tab[data-home-mode]'))) { pick('.tm-tab[data-home-mode]', el); renderHome(); return; }

@@ -158,7 +158,7 @@ function initHome(){
       const values=[pickup,...extras,destination];
       if(values.map(getCoord).filter(Boolean).length!==values.length) return fail('Please choose each city from the list.');
       window.__tmExtraCities=extras;
-      const roundtrip=$('.tm-radio[data-home-trip].active')?.dataset.homeTrip==='roundtrip';
+      const roundtrip=$('.tm-radio[data-home-trip].active')?.dataset.homeTrip==='roundtrip'&&extras.length===0;
       return openInlineBooking({mode:'outstation',pickup,destination,trip:roundtrip?'roundtrip':'oneway',phone});
     }
     if(service==='local'){
@@ -194,7 +194,7 @@ function getCoord(name){if(CITY_COORDS[name])return {lat:CITY_COORDS[name][0],ln
 function haversine(a,b){const R=6371,rad=x=>x*Math.PI/180;const dLat=rad(b.lat-a.lat),dLon=rad(b.lng-a.lng);const x=Math.sin(dLat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 function approximateDistance(points){let km=0;for(let i=0;i<points.length-1;i++)km+=haversine(points[i],points[i+1]);return Math.max(1,Math.round(km*1.18));}
 function routePointsForMode(mode){
-  if(mode==='outstation') return [$('#pickup')?.value,...(window.__tmExtraCities||[]),$('#destination')?.value].map(getCoord).filter(Boolean);
+  if(mode==='outstation'){const dom=$$('#bookExtraCities input').map(i=>i.value.trim()).filter(Boolean);const extras=dom.length?dom:(window.__tmExtraCities||[]);return [$('#pickup')?.value,...extras,$('#destination')?.value].map(getCoord).filter(Boolean);}
   if(mode==='airport'){const city=$('#airportCity')?.value, airport=$('#airport')?.value;return [getCoord(city),getCoord(airport)].filter(Boolean);}
   return [];
 }
@@ -213,6 +213,7 @@ function validateBasics(){
   if(mode==='local' && !$('#localCity').value) throw new Error('Please select the city for local rental.');
   if(mode==='airport' && (!$('#airportCity').value||!$('#airport').value||!$('#airportDirection').value)) throw new Error('Please select city, airport and transfer direction.');
   if(mode==='outstation' && $('#pickup').value===$('#destination').value) throw new Error('Pickup and destination cannot be the same.');
+  if(mode==='outstation'){const ex=$$('#bookExtraCities input').map(i=>i.value.trim());if(ex.some(v=>!v)) throw new Error('Please fill or remove the extra city.');if(ex.some(v=>!getCoord(v))) throw new Error('Please choose each city from the list.');if(ex.length&&selectedTrip()==='roundtrip') throw new Error('Round Trip is available only for 2 cities.');}
 }
 function payloadForEstimate(){
   const mode=activeMode();
