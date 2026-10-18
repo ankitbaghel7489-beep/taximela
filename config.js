@@ -7,7 +7,7 @@ window.TAXIMELA_CONFIG = {
     authDomain: "taximela-5bcae.firebaseapp.com",
     storageBucket: "taximela-5bcae.firebasestorage.app"
   },
-  googleMapsBrowserKey: "REPLACE_WITH_HTTP_REFERRER_RESTRICTED_MAPS_JS_KEY",
+  googleMapsBrowserKey: "AIzaSyAVnPHFleFW7I-frqMBQtrqUev77v66prs",
   functionsRegion: "asia-south1",
   razorpayKeyId: "rzp_live_TneTaTqezRtcyJ"
 };
