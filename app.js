@@ -47,6 +47,44 @@ let confirmation = null;
 let recaptcha = null;
 let mapsPromise = null;
 
+/* ── Address-based distance (pickup address -> drop address) ── */
+let addrState = {pickup:null, drop:null}; // {lat,lng,address}
+let addrFareActive = false;
+let addrTimer = null;
+
+function refreshAddrFare(){
+  clearTimeout(addrTimer);
+  addrTimer = setTimeout(async()=>{
+    if(!currentFare || !auth.currentUser) return;
+    if((addrState.pickup && addrState.drop) || addrFareActive) await estimate(true);
+  }, 300);
+}
+
+function bindAddressInput(id, key){
+  const el = $(id); if(!el || el.dataset.tmAddr) return;
+  el.dataset.tmAddr = '1';
+  loadGoogleMaps().then(maps=>{
+    if(!maps.places) return;
+    const ac = new maps.places.Autocomplete(el, {componentRestrictions:{country:'in'}, fields:['geometry','formatted_address','name']});
+    ac.addListener('place_changed', ()=>{
+      const p = ac.getPlace();
+      const loc = p && p.geometry && p.geometry.location;
+      if(!loc) return;
+      const address = p.formatted_address || el.value;
+      el.value = address;
+      addrState[key] = {lat: loc.lat(), lng: loc.lng(), address};
+      refreshAddrFare();
+    });
+  }).catch(e=>console.warn('address autocomplete', e));
+  el.addEventListener('input', ()=>{
+    const s = addrState[key];
+    if(s && el.value !== s.address){
+      addrState[key] = null;
+      if(addrFareActive) refreshAddrFare();
+    }
+  });
+}
+
 function loadGoogleMaps(){
   if(window.google?.maps) return Promise.resolve(window.google.maps);
   if(mapsPromise) return mapsPromise;
@@ -58,7 +96,7 @@ function loadGoogleMaps(){
     const script=document.createElement('script');
     script.dataset.taximelaMaps='1';
     script.async=true;script.defer=true;
-    script.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}`;
+    script.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places`;
     script.onload=()=>resolve(window.google.maps);
     script.onerror=()=>reject(new Error('Google Maps could not be loaded. Check the API key and enabled APIs.'));
     document.head.appendChild(script);
@@ -218,11 +256,20 @@ function validateBasics(){
 function payloadForEstimate(){
   const mode=activeMode();
   const points=routePointsForMode(mode);
+  let routePts=points;
+  addrFareActive=false;
+  if(mode==='outstation'&&addrState.pickup&&addrState.drop&&points.length===2){
+    routePts=[
+      {lat:addrState.pickup.lat,lng:addrState.pickup.lng,name:$('#pickup').value.trim(),address:addrState.pickup.address},
+      {lat:addrState.drop.lat,lng:addrState.drop.lng,name:$('#destination').value.trim(),address:addrState.drop.address}
+    ];
+    addrFareActive=true;
+  }
   if(mode==='outstation' && points.length<2) throw new Error('Route coordinates are unavailable for the selected cities.');
   if(mode==='airport' && points.length<2) throw new Error('Airport/city coordinates are unavailable.');
   if(mode==='local' && ![20,40,80,120].includes(num($('#package')?.value))) throw new Error('Please select a local package.');
   const dt=$('#pickupDateTime').value||localDT(new Date()); const ret=(mode==='outstation'&&selectedTrip()==='roundtrip')?($('#returnDateTime').value||''):'';
-  return {tripType:mode,category:$('#category').value,tollMode:$('#toll').value,packageKm:num($('#package')?.value),extraHours:num($('#extraHours')?.value),pet:$('#pet').checked,pickupDateTime:new Date(dt).toISOString(),returnDateTime:ret?new Date(ret).toISOString():null,routePoints:points,distanceMultiplier:mode==='outstation'&&selectedTrip()==='roundtrip'?1.8:1,isOneWay:mode==='outstation'?selectedTrip()==='oneway':true};
+  return {tripType:mode,category:$('#category').value,tollMode:$('#toll').value,packageKm:num($('#package')?.value),extraHours:num($('#extraHours')?.value),pet:$('#pet').checked,pickupDateTime:new Date(dt).toISOString(),returnDateTime:ret?new Date(ret).toISOString():null,routePoints:routePts,distanceMultiplier:mode==='outstation'&&selectedTrip()==='roundtrip'?1.8:1,isOneWay:mode==='outstation'?selectedTrip()==='oneway':true};
 }
 function fallbackFare(){ throw new Error('Live fare service is unavailable. Please try again after the Firebase function is deployed.'); }
 function initAdvanceSlider(r){
@@ -240,8 +287,8 @@ function initAdvanceSlider(r){
   };
   sl.oninput=apply;apply();
 }
-function renderFare(r){currentFare=r;setTimeout(()=>$('#fareBox')?.scrollIntoView({behavior:'smooth',block:'center'}),150);$('#fareBox')?.classList.remove('hidden');$('#fareAmount').textContent=money(r.totalFare);$('#fareDistance').textContent=`${Number(r.distanceKm||0).toFixed(0)} km · ${r.mode||''}`;$('#fareAdvance').textContent=money(r.advance);initAdvanceSlider(r);$('#fareLabel').textContent=`${$('#category').value} · ${selectedTrip()==='roundtrip'?'Round Trip':activeMode()}`;if(auth.currentUser){$('#customerBlock')?.classList.add('hidden');const cf=$('#couponCode')?.closest('.field');const pb=$('#paymentBlock');if(cf&&pb&&!pb.contains(cf))pb.insertBefore(cf,$('#payBtn'));cf?.classList.remove('hidden');pb?.classList.remove('hidden');$('#payBtn').disabled=false;}else{$('#customerBlock')?.classList.remove('hidden');$('#paymentBlock')?.classList.add('hidden');}}
-async function estimate(){hideMsg();if(!auth.currentUser){$('#customerBlock')?.classList.remove('hidden');msg('Please enter your mobile number and verify the OTP to see your fare.');$('#customerBlock')?.scrollIntoView({behavior:'smooth',block:'center'});return;}$('#estimateBtn').disabled=true;$('#estimateBtn').textContent='Calculating…';try{validateBasics();const p=payloadForEstimate();try{const result=await estimateFareFn(p);renderFare(result.data);toast('Fare estimate ready.');}catch(fnErr){console.warn('estimateFare unavailable',fnErr);if(activeMode()!=='local')throw fnErr;const category=$('#category').value;const packageKm=num($('#package').value);const pkg=LOCAL_PACKAGE_RATES[category]?.[packageKm];if(!pkg)throw new Error('This local package is not available for the selected cab.');const extraHours=Math.max(0,num($('#extraHours').value));const extraHoursFare=extraHours*300;const petCharge=$('#pet').checked?750:0;const baseFare=pkg+extraHoursFare;const commissionPercent=num(pricing.commissionPercent);const totalFare=baseFare+petCharge;const advance=(baseFare*commissionPercent/100)+petCharge;renderFare({distanceKm:packageKm,baseFare,extraHoursFare,petCharge,nightCharge:0,totalFare,advance,commissionPercent,mode:`${packageKm} km package`});toast('Local package fare calculated.');}}catch(e){console.error('estimateFare',e);msg(e?.message||'Could not calculate the fare. Please try again.');}finally{$('#estimateBtn').disabled=false;$('#estimateBtn').textContent='Check Price & Book Cab';}}
+function renderFare(r,silent){currentFare=r;if(!silent)setTimeout(()=>$('#fareBox')?.scrollIntoView({behavior:'smooth',block:'center'}),150);$('#fareBox')?.classList.remove('hidden');$('#fareAmount').textContent=money(r.totalFare);$('#fareDistance').textContent=`${Number(r.distanceKm||0).toFixed(0)} km · ${r.mode||''}`;$('#fareAdvance').textContent=money(r.advance);const _prevPct=Number($('#advSlider')?.value);initAdvanceSlider(r);if(silent&&_prevPct>=Number($('#advSlider')?.min)){const _s=$('#advSlider');_s.value=_prevPct;if(_s.oninput)_s.oninput();}$('#fareLabel').textContent=`${$('#category').value} · ${selectedTrip()==='roundtrip'?'Round Trip':activeMode()}`;if(auth.currentUser){$('#customerBlock')?.classList.add('hidden');const cf=$('#couponCode')?.closest('.field');const pb=$('#paymentBlock');if(cf&&pb&&!pb.contains(cf))pb.insertBefore(cf,$('#payBtn'));cf?.classList.remove('hidden');pb?.classList.remove('hidden');$('#payBtn').disabled=false;}else{$('#customerBlock')?.classList.remove('hidden');$('#paymentBlock')?.classList.add('hidden');}}
+async function estimate(opts){const silent=opts===true;hideMsg();if(!auth.currentUser){$('#customerBlock')?.classList.remove('hidden');msg('Please enter your mobile number and verify the OTP to see your fare.');$('#customerBlock')?.scrollIntoView({behavior:'smooth',block:'center'});return;}$('#estimateBtn').disabled=true;$('#estimateBtn').textContent='Calculating…';try{validateBasics();const p=payloadForEstimate();try{const result=await estimateFareFn(p);renderFare(result.data,silent);if(!silent)toast('Fare estimate ready.');}catch(fnErr){console.warn('estimateFare unavailable',fnErr);if(activeMode()!=='local')throw fnErr;const category=$('#category').value;const packageKm=num($('#package').value);const pkg=LOCAL_PACKAGE_RATES[category]?.[packageKm];if(!pkg)throw new Error('This local package is not available for the selected cab.');const extraHours=Math.max(0,num($('#extraHours').value));const extraHoursFare=extraHours*300;const petCharge=$('#pet').checked?750:0;const baseFare=pkg+extraHoursFare;const commissionPercent=num(pricing.commissionPercent);const totalFare=baseFare+petCharge;const advance=(baseFare*commissionPercent/100)+petCharge;renderFare({distanceKm:packageKm,baseFare,extraHoursFare,petCharge,nightCharge:0,totalFare,advance,commissionPercent,mode:`${packageKm} km package`});toast('Local package fare calculated.');}}catch(e){console.error('estimateFare',e);msg(e?.message||'Could not calculate the fare. Please try again.');}finally{$('#estimateBtn').disabled=false;$('#estimateBtn').textContent='Check Price & Book Cab';}}
 
 function syncCabCategories(){
   const select=$('#category'); if(!select) return;
@@ -279,6 +326,12 @@ async function pay(){
   if(!currentFare) return msg('Calculate the fare first.'); if(!auth.currentUser) return msg('Please verify your phone number first.');
   try{validateBasics();}catch(e){return msg(e.message);}
   if((($('#pickupAddress')?.value)||'').trim().length<5){$('#paymentStatus').textContent='Please enter your exact pickup address before paying.';$('#pickupAddress')?.focus();return;}
+  const _multi=$$('#bookExtraCities input').some(i=>i.value.trim());
+  if(activeMode()==='outstation'&&!_multi){
+    if(($('#dropAddress')?.value||'').trim()&&!addrState.drop){$('#paymentStatus').textContent='Please choose your drop address from the suggestions list.';$('#dropAddress')?.focus();return;}
+    if(addrState.drop&&!addrState.pickup){$('#paymentStatus').textContent='Please choose your pickup address from the suggestions list so the exact distance can be calculated.';$('#pickupAddress')?.focus();return;}
+    if(addrState.pickup&&addrState.drop&&!addrFareActive){$('#paymentStatus').textContent='Updating your fare… please try again in a moment.';refreshAddrFare();return;}
+  }
   const key=cfg.razorpayKeyId;if(!key||key.startsWith('REPLACE'))return msg('Razorpay Key ID is not configured in config.js.');
   $('#payBtn').disabled=true;$('#paymentStatus').textContent='Creating secure payment order…';
   try{
@@ -312,12 +365,12 @@ async function addBookingLead(){
   }catch(e){console.warn('lead',e)}
 }
 async function createBooking(paymentId){
-  const mode=activeMode();const now=new Date();const bookingId=`TM${String(now.getTime()).slice(-10)}`;const name=$('#customerName').value.trim()||'Customer';const phone=$('#customerPhone').value.replace(/\D/g,'');const from=mode==='outstation'?$('#pickup').value:(mode==='local'?$('#localCity').value:$('#airportCity').value);const to=mode==='outstation'?$('#destination').value:mode==='local'?from:$('#airport').value;const addrTyped=($('#pickupAddress')?.value||'').trim();const fullAddr=addrTyped?`${addrTyped}, ${from}`:from;
+  const mode=activeMode();const now=new Date();const bookingId=`TM${String(now.getTime()).slice(-10)}`;const name=$('#customerName').value.trim()||'Customer';const phone=$('#customerPhone').value.replace(/\D/g,'');const from=mode==='outstation'?$('#pickup').value:(mode==='local'?$('#localCity').value:$('#airportCity').value);const to=mode==='outstation'?$('#destination').value:mode==='local'?from:$('#airport').value;const addrTyped=($('#pickupAddress')?.value||'').trim();const fullAddr=addrTyped?(addrTyped.toLowerCase().includes(String(from).toLowerCase())?addrTyped:`${addrTyped}, ${from}`):from;const dropAddr=($('#dropAddress')?.value||'').trim();
   const pickupDt=$('#pickupDateTime').value?new Date($('#pickupDateTime').value):now;const returnDt=(mode==='outstation'&&selectedTrip()==='roundtrip'&&$('#returnDateTime').value)?new Date($('#returnDateTime').value):null;const paymentMethod='Razorpay';
   try{
     await ensureCustomerRecord(phone,name);
-    const ride=await addDoc(collection(db,'rides'),{id:bookingId,customer:name,customerPhone:phone,driver:'Not Assigned',from,to,amount:currentFare.totalFare,baseFare:currentFare.baseFare,hasPet:$('#pet').checked,status:'Ongoing',date:pickupDt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),paymentMethod,advancePaid:payState.paid,couponCode:payState.couponCode,couponDiscount:payState.discount,razorpayPaymentId:paymentId,pickupAddress:fullAddr,cabType:$('#category').value,bookingType:mode,tripType:(mode==='outstation'?selectedTrip():mode),pickupDateTime:pickupDt.toISOString(),pickupDate:`${pickupDt.getDate()}/${pickupDt.getMonth()+1}/${pickupDt.getFullYear()}`,pickupTime:pickupDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}),returnDateTime:returnDt?returnDt.toISOString():null,tollMode:$('#toll').value,tollLabel:$('#toll').value==='tollIncl'?'Toll + State Tax Included':'Toll + State Tax Excluded',parkingPaidBy:'Customer',distanceKm:Math.round(currentFare.distanceKm||0),source:'website',requestedVehicle:$('#category').value,assignedVehicle:$('#category').value,matchType:'Exact',customerApproval:'Not Required',returnDate:returnDt?`${returnDt.getDate()}/${returnDt.getMonth()+1}/${returnDt.getFullYear()}`:null,returnTime:returnDt?returnDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):null,createdAt:serverTimestamp()});
-    const pts=routePointsForMode(mode);const active=await addDoc(collection(db,'activeRides'),{id:bookingId,customer:name,customerPhone:phone,driver:null,pickup:from,pickupLat:pts[0]?.lat??null,pickupLng:pts[0]?.lng??null,destination:to,pickupAddress:fullAddr,distance:`${Math.round(currentFare.distanceKm||0)} km`,fare:currentFare.totalFare,baseFare:currentFare.baseFare,hasPet:$('#pet').checked,platformFee:currentFare.totalFare*(num(pricing.commissionPercent)/100),paymentStatus:'Paid',rideStatus:'Searching Driver',liveLocation:'—',paymentMethod,cabType:$('#category').value,extraPerKm:0,tollIncluded:$('#toll').value==='tollIncl',tollRate:num(pricing.rates?.[$('#category').value]?.[$('#toll').value]),parkingPaidBy:'Customer',source:'website',pickupDateTime:pickupDt.toISOString(),isLocal:mode!=='outstation',bookingType:mode,isOneWay:selectedTrip()==='oneway',totalDistance:Math.round(currentFare.distanceKm||0),pickupDate:`${pickupDt.getDate()}/${pickupDt.getMonth()+1}/${pickupDt.getFullYear()}`,pickupTime:pickupDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}),returnDate:returnDt?`${returnDt.getDate()}/${returnDt.getMonth()+1}/${returnDt.getFullYear()}`:null,returnTime:returnDt?returnDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):null,nightCharge:num(currentFare.nightCharge),requestedVehicle:$('#category').value,assignedVehicle:$('#category').value,matchType:'Exact',customerApproval:'Not Required',razorpayPaymentId:paymentId,createdAt:serverTimestamp()});
+    const ride=await addDoc(collection(db,'rides'),{id:bookingId,customer:name,customerPhone:phone,driver:'Not Assigned',from,to,amount:currentFare.totalFare,baseFare:currentFare.baseFare,hasPet:$('#pet').checked,status:'Ongoing',date:pickupDt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),paymentMethod,advancePaid:payState.paid,couponCode:payState.couponCode,couponDiscount:payState.discount,razorpayPaymentId:paymentId,pickupAddress:fullAddr,dropAddress:dropAddr,cabType:$('#category').value,bookingType:mode,tripType:(mode==='outstation'?selectedTrip():mode),pickupDateTime:pickupDt.toISOString(),pickupDate:`${pickupDt.getDate()}/${pickupDt.getMonth()+1}/${pickupDt.getFullYear()}`,pickupTime:pickupDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}),returnDateTime:returnDt?returnDt.toISOString():null,tollMode:$('#toll').value,tollLabel:$('#toll').value==='tollIncl'?'Toll + State Tax Included':'Toll + State Tax Excluded',parkingPaidBy:'Customer',distanceKm:Math.round(currentFare.distanceKm||0),source:'website',requestedVehicle:$('#category').value,assignedVehicle:$('#category').value,matchType:'Exact',customerApproval:'Not Required',returnDate:returnDt?`${returnDt.getDate()}/${returnDt.getMonth()+1}/${returnDt.getFullYear()}`:null,returnTime:returnDt?returnDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):null,createdAt:serverTimestamp()});
+    const pts=routePointsForMode(mode);const active=await addDoc(collection(db,'activeRides'),{id:bookingId,customer:name,customerPhone:phone,driver:null,pickup:from,pickupLat:addrState.pickup?.lat??pts[0]?.lat??null,pickupLng:addrState.pickup?.lng??pts[0]?.lng??null,destination:to,pickupAddress:fullAddr,dropAddress:dropAddr,distance:`${Math.round(currentFare.distanceKm||0)} km`,fare:currentFare.totalFare,baseFare:currentFare.baseFare,hasPet:$('#pet').checked,platformFee:currentFare.totalFare*(num(pricing.commissionPercent)/100),paymentStatus:'Paid',rideStatus:'Searching Driver',liveLocation:'—',paymentMethod,cabType:$('#category').value,extraPerKm:0,tollIncluded:$('#toll').value==='tollIncl',tollRate:num(pricing.rates?.[$('#category').value]?.[$('#toll').value]),parkingPaidBy:'Customer',source:'website',pickupDateTime:pickupDt.toISOString(),isLocal:mode!=='outstation',bookingType:mode,isOneWay:selectedTrip()==='oneway',totalDistance:Math.round(currentFare.distanceKm||0),pickupDate:`${pickupDt.getDate()}/${pickupDt.getMonth()+1}/${pickupDt.getFullYear()}`,pickupTime:pickupDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}),returnDate:returnDt?`${returnDt.getDate()}/${returnDt.getMonth()+1}/${returnDt.getFullYear()}`:null,returnTime:returnDt?returnDt.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):null,nightCharge:num(currentFare.nightCharge),requestedVehicle:$('#category').value,assignedVehicle:$('#category').value,matchType:'Exact',customerApproval:'Not Required',razorpayPaymentId:paymentId,createdAt:serverTimestamp()});
     if(payState.docId){try{await applyPromoCodeFn({promoDocId:payState.docId});}catch(e){console.warn('promo usage',e)}}
     currentBooking={docId:active.id,bookingId};showStatus(active.id,bookingId,from,to,$('#category').value,currentFare.totalFare);toast('Booking confirmed successfully.');
   }catch(e){console.error(e);$('#paymentStatus').textContent=`Payment verified, but booking creation failed: ${e.message}`;$('#payBtn').disabled=false;}
@@ -355,7 +408,7 @@ function setBookAirportFromParams(params){
   a?._tmRefresh?.();
   if(c&&params.get('airportCity'))c.value=params.get('airportCity');
 }
-function syncReturn(){const show=activeMode()==='outstation'&&selectedTrip()==='roundtrip';$('#returnWrap')?.classList.toggle('hidden',!show);}
+function syncReturn(){$('#dropAddressField')?.classList.toggle('hidden',activeMode()!=='outstation');const show=activeMode()==='outstation'&&selectedTrip()==='roundtrip';$('#returnWrap')?.classList.toggle('hidden',!show);}
 function enhanceBookingUI(){
   const toll=$('#toll');
   if(toll){
@@ -368,6 +421,10 @@ function enhanceBookingUI(){
     const f=document.createElement('div');f.className='field';f.id='pickupAddressField';
     f.innerHTML='<label>Exact pickup address</label><input id="pickupAddress" placeholder="House / street / landmark, area" autocomplete="off">';
     pb.insertBefore(f,$('#payBtn'));
+    const g=document.createElement('div');g.className='field';g.id='dropAddressField';
+    g.innerHTML='<label>Drop address (optional — fare updates by exact distance)</label><input id="dropAddress" placeholder="Search drop location" autocomplete="off">';
+    pb.insertBefore(g,$('#payBtn'));
+    bindAddressInput('#pickupAddress','pickup');bindAddressInput('#dropAddress','drop');
   }
   $('#couponCode')?.closest('.field')?.classList.add('hidden');
 }
