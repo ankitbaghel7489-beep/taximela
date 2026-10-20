@@ -186,7 +186,7 @@ function initHome(){
     const phone=$('#homePhone')?.value.replace(/\D/g,'')||'';
     const out=$('#homeDistance');
     const fail=t=>{out.textContent=t;out.classList.add('error');};
-    if(phone.length!==10) return fail('Please enter a valid 10-digit mobile number.');
+    if(!validPhone(phone)) return fail('Please enter your real 10-digit mobile number.');
     out.classList.remove('error');out.textContent='';
     window.__tmExtraCities=[];
     if(mode==='outstation'){
@@ -289,13 +289,20 @@ function initAdvanceSlider(r){
   sl.oninput=apply;apply();
 }
 function renderFare(r,silent){currentFare=r;if(!silent)setTimeout(()=>$('#fareBox')?.scrollIntoView({behavior:'smooth',block:'center'}),150);$('#fareBox')?.classList.remove('hidden');$('#fareAmount').textContent=money(r.totalFare);$('#fareDistance').textContent=`${Number(r.distanceKm||0).toFixed(0)} km · ${r.mode||''}`;$('#fareAdvance').textContent=money(r.advance);const _prevPct=Number($('#advSlider')?.value);initAdvanceSlider(r);if(silent&&_prevPct>=Number($('#advSlider')?.min)){const _s=$('#advSlider');_s.value=_prevPct;if(_s.oninput)_s.oninput();}$('#fareLabel').textContent=`${$('#category').value} · ${selectedTrip()==='roundtrip'?'Round Trip':activeMode()}`;$('#customerBlock')?.classList.add('hidden');const pb=$('#paymentBlock');if(pb){const pbtn=$('#payBtn');[$('#customerName')?.closest('.field'),$('#couponCode')?.closest('.field')].forEach(f=>{if(f){if(!pb.contains(f))pb.insertBefore(f,pbtn);f.classList.remove('hidden');}});pb.classList.remove('hidden');}if($('#payBtn'))$('#payBtn').disabled=false;}
-const CAR_INFO = {Hatchback:'4 seats',Sedan:'4 seats',Ertiga:'6 seats',Innova:'7 seats','Innova Crysta':'7 seats'};
+const CAR_INFO = {Hatchback:{seats:'4+1 seater',sim:'Swift, WagonR or Similar',img:'assets/hatchback-v2.png',label:'HATCHBACK (AC)'},Sedan:{seats:'4+1 seater',sim:'Dzire, Etios or Similar',img:'assets/sedan-v2.png',label:'SEDAN (AC)'},Ertiga:{seats:'6+1 seater',sim:'Ertiga, Carens or Similar',img:'assets/ertiga-v2.png',label:'SUV - ERTIGA (AC)'},Innova:{seats:'6+1 seater',sim:'Innova or Similar',img:'assets/innova-v2.png',label:'INNOVA (AC)'},'Innova Crysta':{seats:'6+1 seater',sim:'Innova Crysta or Similar',img:'assets/crysta-v2.png',label:'INNOVA CRYSTA (AC)'}};
+function validPhone(v){
+  v=String(v||'').replace(/\D/g,'');
+  if(!/^[6-9]\d{9}$/.test(v))return false;
+  if(Math.max(...[...new Set(v)].map(d=>v.split(d).length-1))>=6)return false;
+  if(['9876543210','9123456789','8123456789','7123456789','6123456789','9012345678','8901234567'].includes(v))return false;
+  return true;
+}
 function allowedCats(){return activeMode()==='outstation'?CAB_CATEGORIES:CAB_CATEGORIES.filter(c=>c!=='Innova Crysta');}
 function payAnchor(){const nf=$('#customerName')?.closest('.field');const pb=$('#paymentBlock');return (nf&&pb&&pb.contains(nf))?nf:$('#payBtn');}
 function injectCarStyles(){
   if($('#tmCarStyles'))return;
   const s=document.createElement('style');s.id='tmCarStyles';
-  s.textContent='.tm-cars{margin:16px 0 8px}.tm-cars h4{margin:0 0 4px}.tm-cars .tm-cars-sub{font-size:12px;color:#777;margin:0 0 10px}.tm-car-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:14px;margin:0 0 10px;border:2px solid #eee;border-radius:14px;background:#fff;cursor:pointer;font:inherit;color:#111}.tm-car-opt.sel{border-color:#ffcc00;background:#fffbea}.tm-car-opt b{display:block;font-size:15px}.tm-car-opt small{color:#777;font-size:12px}.tm-car-fare{text-align:right}.tm-car-fare b{font-size:17px}';
+  s.textContent='.tm-cars{margin:16px 0 8px}.tm-cars h4{margin:0 0 4px}.tm-cars .tm-cars-sub{font-size:12px;color:#777;margin:0 0 12px}.tm-car-grid{display:grid;grid-template-columns:1fr;gap:14px}@media(min-width:900px){.tm-car-grid{grid-template-columns:1fr 1fr}}.tm-car-opt{display:block;width:100%;text-align:center;padding:16px 14px;border:2px solid #eee;border-radius:16px;background:#fff;cursor:pointer;font:inherit;color:#111}.tm-car-opt.sel{border-color:#ffcc00;background:#fffbea}.tm-car-opt img{max-width:78%;max-height:120px;object-fit:contain;margin:0 auto 6px;display:block}.tm-car-price{font-size:26px;font-weight:900;color:#111}.tm-car-kind{font-size:12px;font-weight:800;color:#1b8fa8;margin-top:2px}.tm-car-sim{font-size:14px;margin:4px 0 10px;color:#333}.tm-car-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-top:1px solid #f0f0f0;text-align:left}.tm-car-row span{color:#555}.tm-car-row b.ok{color:#16833b}.tm-car-btn{display:block;margin-top:12px;padding:12px;border-radius:999px;background:#ffcc00;font-weight:900;font-size:14px}.tm-car-opt.sel .tm-car-btn{background:#111;color:#ffcc00}';
   document.head.appendChild(s);
 }
 function ensureCarList(){
@@ -314,7 +321,7 @@ function renderCarList(){
   const el=ensureCarList();if(!el)return;
   const cats=Object.keys(carFares);
   el.className='tm-cars';
-  el.innerHTML='<h4>Choose your cab</h4><p class="tm-cars-sub">Tap a cab to continue. The final fare updates with your exact pickup &amp; drop address.</p>'+cats.map(c=>{const r=carFares[c];return `<button type="button" class="tm-car-opt" data-car="${escapeHtml(c)}"><span><b>${escapeHtml(c)}</b><small>${CAR_INFO[c]||''} · ${Math.round(r.distanceKm||0)} km</small></span><span class="tm-car-fare"><b>${money(r.totalFare)}</b><small>Advance ${money(r.advance)}</small></span></button>`;}).join('');
+  el.innerHTML='<h4>Choose your cab</h4><p class="tm-cars-sub">Tap a cab to continue. The final fare updates with your exact pickup &amp; drop address.</p><div class="tm-car-grid">'+cats.map(c=>{const r=carFares[c];const ci=CAR_INFO[c]||{};const out=activeMode()==='outstation';const tollOk=/toll included/i.test(r.mode||'');return `<button type="button" class="tm-car-opt" data-car="${escapeHtml(c)}"><img src="${ci.img||''}" alt="${escapeHtml(c)}"><div class="tm-car-price">${money(r.totalFare)}</div><div class="tm-car-kind">${escapeHtml(ci.label||c)} (${escapeHtml(ci.seats||'')})</div><div class="tm-car-sim">${escapeHtml(ci.sim||'')}</div><div class="tm-car-row"><span>Distance</span><b>${Math.round(r.distanceKm||0)} km</b></div>${out?`<div class="tm-car-row"><span>Toll, State Tax</span><b class="${tollOk?'ok':''}">${tollOk?'Included':'Excluded'}</b></div>`:''}<div class="tm-car-row"><span>Parking</span><b>Paid by customer</b></div><div class="tm-car-row"><span>Advance to pay now</span><b>${money(r.advance)}</b></div><span class="tm-car-btn">Book Now</span></button>`;}).join('')+'</div>';
   $$('.tm-car-opt',el).forEach(b=>b.addEventListener('click',()=>selectCar(b.dataset.car)));
   setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),100);
 }
@@ -343,7 +350,7 @@ async function estimate(opts){
   const silent=opts===true;hideMsg();
   const btn=$('#estimateBtn');
   const phone=($('#customerPhone')?.value||'').replace(/\D/g,'');
-  if(!/^[6-9]\d{9}$/.test(phone)){msg('Please enter your valid 10-digit mobile number to see the cars and fares.');$('#customerPhone')?.focus();return;}
+  if(!validPhone(phone)){msg('Please enter your real 10-digit mobile number to see the cars and fares.');$('#customerPhone')?.focus();return;}
   if(btn&&!btn.dataset.tmLabel)btn.dataset.tmLabel=btn.textContent;
   if(!silent&&btn){btn.disabled=true;btn.textContent='Calculating…';}
   try{
@@ -398,7 +405,7 @@ function bookingEndpoints(){
 async function pay(){
   if(!currentFare||!lastPayload) return msg('Please choose a cab first.');
   const phone=($('#customerPhone')?.value||'').replace(/\D/g,'');
-  if(!/^[6-9]\d{9}$/.test(phone)){$('#paymentStatus').textContent='Please enter a valid 10-digit mobile number.';$('#customerPhone')?.focus();return;}
+  if(!validPhone(phone)){$('#paymentStatus').textContent='Please enter your real 10-digit mobile number.';$('#customerPhone')?.focus();return;}
   try{validateBasics();}catch(e){return msg(e.message);}
   if((($('#pickupAddress')?.value)||'').trim().length<5){$('#paymentStatus').textContent='Please enter your exact pickup address before paying.';$('#pickupAddress')?.focus();return;}
   const _multi=$$('#bookExtraCities input').some(i=>i.value.trim());
@@ -523,6 +530,7 @@ async function initBook(){
   const mode=params.get('mode'),category=params.get('category'),pickup=params.get('pickup'),destination=params.get('destination'),phone=params.get('phone');
   if(mode && ['outstation','local','airport'].includes(mode)){const tab=$(`.tab[data-mode="${mode}"]`);tab?.click();}
   const _init=await Promise.allSettled([loadPricing(),loadServiceCities()]);if(_init[0].status==='rejected'){console.warn('pricing',_init[0].reason);msg(_init[0].reason?.message||'Pricing could not be loaded. Please try again.');}cityOptions();syncCabCategories();setupAirportUI({dir:'#airportDirection',air:'#airport',city:'#airportCity'});
+  $('#category')?.closest('.field,.tm-field')?.classList.add('hidden');if($('#toll'))$('#toll').value='tollIncl';
   if(category && $('#category') && [...$('#category').options].some(o=>o.value===category))$('#category').value=category;
   if(pickup&&$('#pickup'))$('#pickup').value=pickup;
   if(destination&&$('#destination'))$('#destination').value=destination;
