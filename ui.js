@@ -1,6 +1,6 @@
 /* Taxi Mela - mobile-safe UI layer (plain script; does NOT wait for Firebase / Razorpay / Maps).
    Hamburger, Home tabs/radios, Book a Ride tabs/radios and car cards run from here.
-   Fare / OTP / payment / Firebase logic stays in app.js (unchanged).
+   Fare / payment / Firebase logic stays in app.js (unchanged).
    One delegated 'click' listener: fires reliably on touch and behaves the same on PC. */
 (function () {
   var $ = function (s) { return document.querySelector(s); };
@@ -45,7 +45,7 @@
     sel.innerHTML = allowed.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
     sel.value = allowed.indexOf(cur) > -1 ? cur : (allowed.indexOf('Sedan') > -1 ? 'Sedan' : allowed[0]);
   }
-  function resetFare() { setHidden('#customerBlock', true); setHidden('#paymentBlock', true); setHidden('#fareBox', true); }
+  function resetFare() { setHidden('#customerBlock', true); setHidden('#carList', true); setHidden('#paymentBlock', true); setHidden('#fareBox', true); }
   function renderBookMode(m) {
     syncCabs();
     setHidden('#outstationFields', m !== 'outstation');
@@ -148,7 +148,7 @@
 
     // Buttons that need Firebase / Maps / Razorpay (handled in app.js). If app.js has not loaded yet,
     // show a visible message instead of silently doing nothing.
-    if (t.closest('#homeSubmit,#estimateBtn,#sendOtpBtn,#verifyOtpBtn,#payBtn') && !window.__tmAppReady) {
+    if (t.closest('#homeSubmit,#estimateBtn,#payBtn') && !window.__tmAppReady) {
       var msg = 'The page is still loading. Please wait a few seconds and try again, or refresh the page.';
       var d = $('#homeDistance'), f = $('#formMsg');
       if (d) { d.textContent = msg; d.classList.add('error'); }
