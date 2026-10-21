@@ -44,7 +44,7 @@ button,input,select{font:inherit}
 @media(max-width:980px){.book-layout{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:720px){.cards{grid-template-columns:1fr}.brand span{font-size:16px}.brand .logo{width:30px;height:30px;flex-basis:30px}}
 
 
-/* Taxi Mela home ride cards */
+/* Taximela home ride cards */
 .tm-cars{background:#071015;color:#fff;padding:70px 6vw 55px}
 .tm-cars-inner{max-width:1180px;margin:auto}
 .tm-section-heading{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:28px}.tm-section-heading span{width:48px;height:3px;background:#ffc400}.tm-section-heading h2{margin:0;font-size:28px}
@@ -80,4 +80,89 @@ button, .btn, .cta, .tab, .radio, .tm-tab, .tm-radio, .tm-more, .tm-car-card, .m
   .radio{min-height:42px;padding:8px 4px;cursor:pointer;user-select:none;-webkit-user-select:none;}
   .cta,.btn{min-height:48px;}
   .field input,.field select{min-height:47px;}
+}
+
+
+/* ===== Taximela refresh ===== */
+:root{--ink:#0b0d10;--taxi:#ffc400;--chalk:#f4f5f7;--slate:#5b6370;--fd:'Bricolage Grotesque',Inter,system-ui,sans-serif;--fb:'DM Sans',Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+body{font-family:var(--fb)}
+.tmx-wrap{max-width:1180px;margin:0 auto;padding:0 6vw}
+.page-hero h1,.tmx-wrap h2,.tmx-wrap h3,.section-title{font-family:var(--fd)}
+.tmx-wrap h2{font-size:clamp(32px,4.2vw,54px);line-height:1.04;letter-spacing:-.035em;margin:0}
+.tmx-lead{color:var(--slate);font-size:17px;line-height:1.6;max-width:56ch;margin:14px 0 0}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid #111;outline-offset:3px}
+.tmx-btn{display:inline-block;background:var(--ink);color:#fff;padding:16px 28px;border-radius:12px;font-weight:800;white-space:nowrap}
+.tmx-btn:hover{background:#000}
+
+/* Why */
+.tmx-why{padding:130px 0 80px;background:#fff}
+.tmx-why .tmx-wrap,.tmx-promise .tmx-wrap{display:grid;grid-template-columns:5fr 7fr;gap:64px;align-items:start}
+.tmx-why-list{list-style:none;margin:0;padding:0}
+.tmx-why-list li{padding:26px 0;border-top:1px solid #e3e5e9;display:grid;grid-template-columns:44px 1fr;gap:20px}
+.tmx-why-list li:last-child{border-bottom:1px solid #e3e5e9}
+.tmx-why-list b{display:block;font-family:var(--fd);font-size:21px;letter-spacing:-.02em;margin-bottom:6px}
+.tmx-why-list p{margin:0;color:var(--slate);line-height:1.65;max-width:54ch}
+.tmx-tick{width:44px;height:44px;border-radius:50%;background:var(--taxi);display:grid;place-items:center;font-weight:800;color:#111}
+
+/* Road with milestone stones */
+.tmx-road{background:var(--ink);color:#fff;padding:96px 0 104px}
+.tmx-road .tmx-lead{color:#a9afba}
+.tmx-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:26px;margin-top:64px}
+.tmx-step{position:relative}
+.tmx-step:before{content:"";position:absolute;top:92px;left:-13px;right:-13px;border-top:3px dashed rgba(255,255,255,.28)}
+.tmx-step:first-child:before{left:0}.tmx-step:last-child:before{right:0}
+.tmx-stone{position:relative;z-index:1;width:76px;height:96px;border-radius:38px 38px 5px 5px;background:linear-gradient(var(--taxi) 0 34%,#f6f6f3 34% 100%);color:#111;display:flex;align-items:flex-end;justify-content:center;padding-bottom:14px;font:800 28px var(--fd)}
+.tmx-step h3{margin:30px 0 8px;font-size:21px;letter-spacing:-.02em}
+.tmx-step p{margin:0;color:#a9afba;line-height:1.6;max-width:30ch}
+
+/* Services */
+.tmx-services{background:var(--chalk);padding:96px 0}
+.tmx-svc{display:grid;grid-template-columns:repeat(3,1fr);margin-top:44px;border-top:3px solid var(--ink)}
+.tmx-svc article{padding:30px 32px 6px 0}
+.tmx-svc article+article{padding-left:32px;border-left:1px solid #d9dce1}
+.tmx-svc h3{margin:0 0 10px;font-size:26px;letter-spacing:-.03em}
+.tmx-svc p{margin:0;color:var(--slate);line-height:1.7;max-width:38ch}
+
+/* Routes */
+.tmx-routes{padding:96px 0;background:#fff}
+.tmx-chips{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.tmx-chip{padding:14px 22px;border:2px solid var(--ink);border-radius:999px;font-weight:700;background:#fff;transition:background .15s,border-color .15s}
+.tmx-chip:hover{background:var(--taxi);border-color:var(--taxi)}
+
+/* FAQ */
+.tmx-faq{padding:20px 0 96px;background:#fff}
+.tmx-faq-list{margin-top:34px;max-width:820px;border-top:1px solid #e3e5e9}
+.tmx-faq-list details{border-bottom:1px solid #e3e5e9;padding:4px 0}
+.tmx-faq-list summary{cursor:pointer;list-style:none;padding:20px 40px 20px 0;font-weight:700;font-size:18px;position:relative}
+.tmx-faq-list summary::-webkit-details-marker{display:none}
+.tmx-faq-list summary:after{content:"+";position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:26px;font-weight:400}
+.tmx-faq-list details[open] summary:after{content:"\2212"}
+.tmx-faq-list p{margin:0 0 22px;color:var(--slate);line-height:1.7;max-width:64ch}
+.tmx-faq-list p a{text-decoration:underline}
+
+/* Driver / CTA band */
+.tmx-driver,.tmx-cta-band{background:var(--taxi);padding:72px 0}
+.tmx-driver .tmx-wrap,.tmx-cta-band .tmx-wrap{display:flex;align-items:center;justify-content:space-between;gap:30px;flex-wrap:wrap}
+.tmx-driver h2,.tmx-cta-band h2{max-width:18ch}
+.tmx-driver p,.tmx-cta-band p{margin:12px 0 0;max-width:48ch;color:#2b2b2b;line-height:1.6}
+.tmx-cta-band{background:#fff;border-top:1px solid #e3e5e9}
+.tmx-cta-band .tmx-btn{background:var(--taxi);color:#111}
+
+/* About */
+.tmx-story{padding:90px 0;background:#fff}
+.tmx-story .tmx-wrap{display:grid;grid-template-columns:5fr 7fr;gap:64px;align-items:start}
+.tmx-story-body p{margin:0 0 20px;font-size:18px;line-height:1.75;color:#2d323a;max-width:60ch}
+.tmx-promise{padding:20px 0 90px;background:#fff}
+
+@media(max-width:900px){
+  .tmx-why{padding-top:150px}
+  .tmx-why .tmx-wrap,.tmx-promise .tmx-wrap,.tmx-story .tmx-wrap{grid-template-columns:1fr;gap:30px}
+  .tmx-steps{grid-template-columns:1fr 1fr;row-gap:44px}
+  .tmx-step:before{display:none}
+  .tmx-svc{grid-template-columns:1fr}
+  .tmx-svc article,.tmx-svc article+article{padding:26px 0;border-left:0;border-bottom:1px solid #d9dce1}
+}
+@media(max-width:600px){
+  .tmx-steps{grid-template-columns:1fr}
+  .tmx-road,.tmx-services,.tmx-routes{padding:70px 0}
 }

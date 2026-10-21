@@ -1,4 +1,4 @@
-/* Taxi Mela - mobile-safe UI layer (plain script; does NOT wait for Firebase / Razorpay / Maps).
+/* Taximela - mobile-safe UI layer (plain script; does NOT wait for Firebase / Razorpay / Maps).
    Hamburger, Home tabs/radios, Book a Ride tabs/radios and car cards run from here.
    Fare / payment / Firebase logic stays in app.js (unchanged).
    One delegated 'click' listener: fires reliably on touch and behaves the same on PC. */

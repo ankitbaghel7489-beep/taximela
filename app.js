@@ -195,7 +195,7 @@ function initHome(){
       if(pickup.toLowerCase()===destination.toLowerCase()) return fail('Pickup and destination cannot be the same.');
       const extras=$$('#homeExtraCities input').map(i=>i.value.trim()).filter(Boolean);
       const values=[pickup,...extras,destination];
-      if(values.map(getCoord).filter(Boolean).length!==values.length) return fail('Please choose each city from the list.');
+      if(values.map(getCoord).filter(Boolean).length!==values.length) return fail('Please choose each city from the suggestions.');
       window.__tmExtraCities=extras;
       const roundtrip=$('.tm-radio[data-home-trip].active')?.dataset.homeTrip==='roundtrip'&&extras.length===0;
       return openInlineBooking({mode:'outstation',pickup,destination,trip:roundtrip?'roundtrip':'oneway',phone});
@@ -211,6 +211,7 @@ function initHome(){
     if(!getCoord(city)||!getCoord(airport)) return fail('Location details for the selected city or airport are unavailable.');
     return openInlineBooking({mode:'airport',airportCity:city,airportDirection:direction,airport,phone});
   });
+  ['#homePickup','#homeDestination','#homeLocalCity'].forEach(i=>bindPlaceInput($(i),'city'));
   renderHomeServiceFields();
   loadServiceCities().finally(()=>{populateHomeCityList();setupAirportUI({dir:'#homeAirportDirection',air:'#homeAirport',city:'#homeAirportCity'});});
 }
@@ -229,7 +230,7 @@ function cityOptions(){
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 async function loadPricing(){const s=await getDoc(doc(db,'settings','pricing'));if(!s.exists())throw new Error('Admin pricing is not configured yet. Please update Pricing Management in the Admin App.');const d=s.data();pricing={...d,rates:d.rates||{}};const missing=CAB_CATEGORIES.filter(c=>!pricing.rates[c]);if(missing.length)throw new Error(`Admin pricing is missing for: ${missing.join(', ')}`);}
 async function loadServiceCities(){try{const s=await getDocs(query(collection(db,'serviceCities'),where('active','==',true)));serviceCities=s.docs.map(d=>({id:d.id,...d.data()}));}catch(e){console.warn('serviceCities',e)}}
-function getCoord(name){if(CITY_COORDS[name])return {lat:CITY_COORDS[name][0],lng:CITY_COORDS[name][1],name};if(AIRPORT_COORDS[name])return {lat:AIRPORT_COORDS[name][0],lng:AIRPORT_COORDS[name][1],name};const found=serviceCities.find(x=>String(x.name||x.city||x.cityName||'').toLowerCase()===String(name||'').toLowerCase());if(found?.lat!=null&&found?.lng!=null)return {lat:Number(found.lat),lng:Number(found.lng),name};return null;}
+function getCoord(name){const _pc=placeCache[String(name||'').trim().toLowerCase()];if(_pc)return {lat:_pc.lat,lng:_pc.lng,name};if(CITY_COORDS[name])return {lat:CITY_COORDS[name][0],lng:CITY_COORDS[name][1],name};if(AIRPORT_COORDS[name])return {lat:AIRPORT_COORDS[name][0],lng:AIRPORT_COORDS[name][1],name};const found=serviceCities.find(x=>String(x.name||x.city||x.cityName||'').toLowerCase()===String(name||'').toLowerCase());if(found?.lat!=null&&found?.lng!=null)return {lat:Number(found.lat),lng:Number(found.lng),name};return null;}
 function haversine(a,b){const R=6371,rad=x=>x*Math.PI/180;const dLat=rad(b.lat-a.lat),dLon=rad(b.lng-a.lng);const x=Math.sin(dLat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 function approximateDistance(points){let km=0;for(let i=0;i<points.length-1;i++)km+=haversine(points[i],points[i+1]);return Math.max(1,Math.round(km*1.18));}
 function routePointsForMode(mode){
@@ -252,7 +253,7 @@ function validateBasics(){
   if(mode==='local' && !$('#localCity').value) throw new Error('Please select the city for local rental.');
   if(mode==='airport' && (!$('#airportCity').value||!$('#airport').value||!$('#airportDirection').value)) throw new Error('Please select city, airport and transfer direction.');
   if(mode==='outstation' && $('#pickup').value===$('#destination').value) throw new Error('Pickup and destination cannot be the same.');
-  if(mode==='outstation'){const ex=$$('#bookExtraCities input').map(i=>i.value.trim());if(ex.some(v=>!v)) throw new Error('Please fill or remove the extra city.');if(ex.some(v=>!getCoord(v))) throw new Error('Please choose each city from the list.');if(ex.length&&selectedTrip()==='roundtrip') throw new Error('Round Trip is available only for 2 cities.');}
+  if(mode==='outstation'){const ex=$$('#bookExtraCities input').map(i=>i.value.trim());if(ex.some(v=>!v)) throw new Error('Please fill or remove the extra city.');if(ex.some(v=>!getCoord(v))) throw new Error('Please choose each city from the suggestions.');if(ex.length&&selectedTrip()==='roundtrip') throw new Error('Round Trip is available only for 2 cities.');}
 }
 function payloadForEstimate(){
   const mode=activeMode();
@@ -321,7 +322,7 @@ function renderCarList(){
   const el=ensureCarList();if(!el)return;
   const cats=Object.keys(carFares);
   el.className='tm-cars';
-  el.innerHTML='<h4>Choose your cab</h4><p class="tm-cars-sub">Tap a cab to continue. The final fare updates with your exact pickup &amp; drop address.</p><div class="tm-car-grid">'+cats.map(c=>{const r=carFares[c];const ci=CAR_INFO[c]||{};const out=activeMode()==='outstation';const tollOk=/toll included/i.test(r.mode||'');return `<button type="button" class="tm-car-opt" data-car="${escapeHtml(c)}"><img src="${ci.img||''}" alt="${escapeHtml(c)}"><div class="tm-car-price">${money(r.totalFare)}</div><div class="tm-car-kind">${escapeHtml(ci.label||c)} (${escapeHtml(ci.seats||'')})</div><div class="tm-car-sim">${escapeHtml(ci.sim||'')}</div><div class="tm-car-row"><span>Distance</span><b>${Math.round(r.distanceKm||0)} km</b></div>${out?`<div class="tm-car-row"><span>Toll, State Tax</span><b class="${tollOk?'ok':''}">${tollOk?'Included':'Excluded'}</b></div>`:''}<div class="tm-car-row"><span>Parking</span><b>Paid by customer</b></div><div class="tm-car-row"><span>Advance to pay now</span><b>${money(r.advance)}</b></div><span class="tm-car-btn">Book Now</span></button>`;}).join('')+'</div>';
+  el.innerHTML='<h4>Choose your cab</h4><p class="tm-cars-sub">Tap a cab to continue. The final fare updates with your exact pickup &amp; drop address.</p><div class="tm-car-grid">'+cats.map(c=>{const r=carFares[c];const ci=CAR_INFO[c]||{};const out=activeMode()==='outstation';const tollOk=/toll included/i.test(r.mode||'');return `<button type="button" class="tm-car-opt" data-car="${escapeHtml(c)}"><img src="${ci.img||''}" alt="${escapeHtml(c)}"><div class="tm-car-price">${money(r.totalFare)}</div><div class="tm-car-kind">${escapeHtml(ci.label||c)} (${escapeHtml(ci.seats||'')})</div><div class="tm-car-sim">${escapeHtml(ci.sim||'')}</div><div class="tm-car-row"><span>Distance</span><b>${Math.round(r.distanceKm||0)} km</b></div>${out?`<div class="tm-car-row"><span>Toll, State Tax</span><b class="${tollOk?'ok':''}">${tollOk?'Included':'Excluded'}</b></div>`:(activeMode()==='local'?`<div class="tm-car-row"><span>Toll, State Tax</span><b>Excluded</b></div>`:'')}<div class="tm-car-row"><span>Parking</span><b>Paid by customer</b></div><div class="tm-car-row"><span>Advance to pay now</span><b>${money(r.advance)}</b></div><span class="tm-car-btn">Book Now</span></button>`;}).join('')+'</div>';
   $$('.tm-car-opt',el).forEach(b=>b.addEventListener('click',()=>selectCar(b.dataset.car)));
   setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),100);
 }
@@ -426,7 +427,7 @@ async function pay(){
     const custName=($('#customerName')?.value||'').trim();
     const info={phone,name:custName||'Customer',fareRequest:lastPayload,advancePercent:currentFare.advancePercent,couponCode:cp.code,from:ep.from,to:ep.to,pickupAddress:ep.fullAddr,dropAddress:ep.dropAddr};
     const order=await createOrder(payable);const orderId=order.orderId||order.id;const amountPaise=Number(order.amount||Math.round(payable*100));
-    const rzp=new Razorpay({key:order.keyId||key,amount:amountPaise,currency:'INR',order_id:orderId,name:'Taxi Mela',description:`${ep.from} to ${ep.to}`,prefill:{name:custName,contact:phone},theme:{color:'#ffcc00'},
+    const rzp=new Razorpay({key:order.keyId||key,amount:amountPaise,currency:'INR',order_id:orderId,name:'Taximela',description:`${ep.from} to ${ep.to}`,prefill:{name:custName,contact:phone},theme:{color:'#ffcc00'},
       modal:{ondismiss:()=>{$('#payBtn').disabled=false;}},
       handler:async response=>{
         const paymentId=response.razorpay_payment_id||response.paymentId;
@@ -469,27 +470,41 @@ function pollStatus(bookingId,phone){
   tick();statusTimer=setInterval(tick,20000);
 }
 
+const placeCache = {}; // lowercase place name -> {lat,lng,name} (filled from Google Places)
+function bindPlaceInput(el, kind){
+  if(!el||el.dataset.tmPlaces)return;
+  el.dataset.tmPlaces='1';
+  el.removeAttribute('list');el.setAttribute('autocomplete','off');
+  loadGoogleMaps().then(maps=>{
+    if(!maps.places)return;
+    const ac=new maps.places.Autocomplete(el,{types:kind==='airport'?['airport']:['(cities)'],componentRestrictions:{country:'in'},fields:['geometry','name','formatted_address']});
+    ac.addListener('place_changed',()=>{
+      const pl=ac.getPlace();const loc=pl&&pl.geometry&&pl.geometry.location;
+      if(!loc)return;
+      const nm=pl.name||el.value;
+      el.value=nm;
+      placeCache[String(nm).trim().toLowerCase()]={lat:loc.lat(),lng:loc.lng(),name:nm};
+      hideCars();
+    });
+  }).catch(e=>console.warn('places autocomplete',e));
+}
 function setupAirportUI(ids){
-  const dirEl=$(ids.dir),airEl=$(ids.air);let cityEl=$(ids.city);
-  if(!dirEl||!airEl||!cityEl||airEl.dataset.tmReady)return;
-  airEl.dataset.tmReady='1';
-  const fld=e=>e.closest('.field,.tm-field');
-  if(cityEl.tagName!=='SELECT'){const sel=document.createElement('select');sel.id=cityEl.id;cityEl.replaceWith(sel);cityEl=sel;}
-  const parent=fld(dirEl)?.parentElement;
-  if(parent&&fld(airEl)&&fld(cityEl)&&fld(airEl).parentElement===parent&&fld(cityEl).parentElement===parent){parent.append(fld(dirEl),fld(airEl),fld(cityEl));}
-  const sorted=[...AIRPORTS].sort((a,b)=>a[0].localeCompare(b[0]));
-  airEl.innerHTML='<option value="">Select Airport</option>'+sorted.map(a=>`<option value="${escapeHtml(a[0])}">${escapeHtml(a[0])}</option>`).join('');
-  const refresh=()=>{
-    const keep=cityEl.value;const ap=AIRPORT_COORDS[airEl.value];
-    const label=dirEl.value==='From Airport'?'Drop city':'Pickup city';
-    if(!ap){cityEl.innerHTML='<option value="">Select airport first</option>';return;}
-    const near=[...new Set(serviceCities.map(x=>String(x.name||x.city||x.cityName||'')).filter(Boolean))].map(n=>{const c=getCoord(n);return c?{n,d:haversine({lat:ap[0],lng:ap[1]},c)}:null;}).filter(x=>x&&x.d<=NEARBY_CITY_KM).sort((a,b)=>a.d-b.d);
-    cityEl.innerHTML=near.length?`<option value="">Select ${label}</option>`+near.map(x=>`<option value="${escapeHtml(x.n)}">${escapeHtml(x.n)}</option>`).join(''):'<option value="">No service city near this airport</option>';
-    if(near.some(x=>x.n===keep))cityEl.value=keep;
+  const dirEl=$(ids.dir),airEl=$(ids.air),cityEl=$(ids.city);
+  if(!dirEl||!airEl||!cityEl)return;
+  const toInput=(el,ph)=>{
+    if(el.tagName==='INPUT')return el;
+    const inp=document.createElement('input');inp.id=el.id;inp.type='text';inp.placeholder=ph;inp.autocomplete='off';inp.className=el.className;
+    el.replaceWith(inp);return inp;
   };
-  airEl.addEventListener('change',refresh);dirEl.addEventListener('change',refresh);
-  refresh();
-  airEl._tmRefresh=refresh;
+  const air=toInput(airEl,'Search airport');
+  const city=toInput(cityEl,'Search city');
+  air.placeholder='Search airport';
+  bindPlaceInput(air,'airport');bindPlaceInput(city,'city');
+  if(!dirEl.dataset.tmDir){
+    dirEl.dataset.tmDir='1';
+    const label=()=>{city.placeholder=dirEl.value==='From Airport'?'Drop city':'Pickup city';};
+    dirEl.addEventListener('change',label);label();
+  }
 }
 function setBookAirportFromParams(params){
   const d=$('#airportDirection'),a=$('#airport'),c=$('#airportCity');
@@ -530,6 +545,7 @@ async function initBook(){
   const mode=params.get('mode'),category=params.get('category'),pickup=params.get('pickup'),destination=params.get('destination'),phone=params.get('phone');
   if(mode && ['outstation','local','airport'].includes(mode)){const tab=$(`.tab[data-mode="${mode}"]`);tab?.click();}
   const _init=await Promise.allSettled([loadPricing(),loadServiceCities()]);if(_init[0].status==='rejected'){console.warn('pricing',_init[0].reason);msg(_init[0].reason?.message||'Pricing could not be loaded. Please try again.');}cityOptions();syncCabCategories();setupAirportUI({dir:'#airportDirection',air:'#airport',city:'#airportCity'});
+  ['#pickup','#destination','#localCity'].forEach(i=>bindPlaceInput($(i),'city'));
   $('#category')?.closest('.field,.tm-field')?.classList.add('hidden');if($('#toll'))$('#toll').value='tollIncl';
   if(category && $('#category') && [...$('#category').options].some(o=>o.value===category))$('#category').value=category;
   if(pickup&&$('#pickup'))$('#pickup').value=pickup;
@@ -547,4 +563,5 @@ function initGeneric(){setupNav();}
 if($('#homeSubmit'))initHome();
 if($('#estimateBtn'))initBook();
 if(!$('#homeSubmit')&&!$('#estimateBtn'))initGeneric();
+document.addEventListener('focusin',e=>{const el=e.target;if(el&&el.matches&&el.matches('input[list="bookCities"],input[list="homeCities"]'))bindPlaceInput(el,'city');});
 window.__tmAppReady=true;

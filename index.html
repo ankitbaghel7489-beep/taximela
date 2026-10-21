@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Taxi Mela — One Way Cab Booking</title>
-  <meta name="description" content="Taxi Mela one way, round trip, local and airport cab booking.">
+  <title>Taximela — One Way, Outstation, Local &amp; Airport Cabs</title>
+  <meta name="description" content="Book one way, round trip, local rental and airport cabs with Taximela. See every car with its fare before you pay."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/logo-v2.png">
   <link rel="stylesheet" href="styles.css">
   <script src="config.js"></script><script defer src="ui.js"></script>
@@ -66,7 +66,7 @@
 </head>
 <body class="tm-home">
   <header class="nav">
-    <a class="brand" href="index.html"><img class="logo" src="assets/logo-v2.png" alt="Taxi Mela logo"><span>TAXIMELA</span></a>
+    <a class="brand" href="index.html"><img class="logo" src="assets/logo-v2.png" alt="Taximela logo"><span>TAXIMELA</span></a>
     <nav class="navlinks">
       <a href="index.html">Home</a>
       <a href="book.html">Book a Ride</a><a href="track.html">My Bookings</a>
@@ -114,9 +114,9 @@
               </div>
             </div>
             <div class="tm-phone"><span class="code">+91</span><input id="homePhone" aria-label="Mobile number" placeholder="Enter mobile number" inputmode="numeric" maxlength="10"></div>
-            <button class="tm-submit" id="homeSubmit" type="button">Check Price &amp; Book Cab</button>
+            <button class="tm-submit" id="homeSubmit" type="button">See Cars &amp; Fares</button>
             <div id="homeDistance" class="tm-home-distance" aria-live="polite"></div>
-            <div class="tm-note">Fare, OTP and payment continue right below.</div>
+            <div class="tm-note">Next, see every cab with its fare and pay a small advance to confirm.</div>
           </div>
         </div>
       </div>
@@ -132,10 +132,10 @@
 <div class="form-grid" style="margin-top:8px"><div class="field"><label>Pickup date &amp; time</label><input id="pickupDateTime" type="datetime-local"></div><div class="field" id="returnWrap"><label>Return date &amp; time</label><input id="returnDateTime" type="datetime-local"></div></div>
 <div class="field" style="margin-top:10px"><label><input id="pet" type="checkbox" style="width:18px;height:18px;height:18px;vertical-align:middle;margin-right:6px"> Traveling with a pet (+₹750)</label></div>
 <div id="extraHoursWrap" class="field hidden" style="margin-top:10px"><label>Extra hours</label><input id="extraHours" type="number" min="0" step="1" value="0"></div>
-<button class="cta" id="estimateBtn" type="button">Calculate Fare</button><div id="formMsg" class="hint hidden"></div><div id="fareBox" class="fare hidden"><h4>Fare estimate</h4><div class="fare-row"><span id="fareLabel">—</span><span id="fareAmount">—</span></div><div class="fare-row"><span>Distance</span><span id="fareDistance">—</span></div><div class="fare-row"><span>Advance</span><span id="fareAdvance">—</span></div><div class="fare-row"><span>Advance %</span><span id="advPctLabel">—</span></div><input id="advSlider" type="range" min="15" max="100" step="5" value="15" aria-label="Advance payment percentage" style="width:100%;accent-color:#ffc400;margin:4px 0"><div class="hint" id="advHint">Pay more now, less in cash!</div><div class="fare-row"><span>Balance to pay driver</span><span id="fareBalance">—</span></div></div>
-<div id="customerBlock" class="auth-card hidden"><h3 style="margin:0 0 8px">Confirm your booking</h3><div class="form-grid"><div class="field"><label>Your name</label><input id="customerName" placeholder="Full name"></div><div class="field"><label>Phone</label><input id="customerPhone" inputmode="tel" maxlength="10" placeholder="10-digit mobile number"></div><div class="field"><label>Email (optional)</label><input id="customerEmail" type="email"></div><div class="field"><label>Coupon (optional)</label><input id="couponCode" placeholder="Promo code"></div></div><div id="recaptcha-container" class="recaptcha"></div><div class="otp-row" style="margin-top:12px"><button class="btn btn-primary" id="sendOtpBtn" type="button">Send OTP</button><button class="btn btn-outline" id="verifyOtpBtn" type="button" disabled>Verify OTP</button></div><input id="otp" class="hidden" style="width:100%;margin-top:10px;padding:12px;border:1px solid #ddd;border-radius:11px" inputmode="numeric" maxlength="6" placeholder="Enter OTP"><div id="authStatus" class="small" style="margin-top:8px"></div></div>
-<div id="paymentBlock" class="auth-card hidden"><h3 style="margin:0 0 6px">Pay advance to confirm</h3><p class="small">Secure Razorpay payment. Booking is created only after server-side payment verification.</p><button class="cta" id="payBtn" type="button">Pay Advance</button><div id="paymentStatus" class="small" style="margin-top:8px"></div></div>
-<div id="statusCard" class="status-card hidden"><span class="status-pill" id="statusPill">Searching Driver</span><h3 id="statusTitle">Your booking is confirmed</h3><p style="color:#cfd2d8;font-size:13px;line-height:1.6;margin:0 0 6px">Thank you for booking with Taxi Mela. Your payment has been received and we are arranging your driver. Driver details will be shared with you shortly. Please save your Booking ID &mdash; you can check the status anytime under <a href="track.html" style="color:#ffcc00;font-weight:800">My Bookings</a>.</p><div class="booking-summary"><div><span>Booking ID</span><strong id="bookingIdText">—</strong></div><div><span>Route</span><strong id="routeText">—</strong></div><div><span>Cab</span><strong id="cabText">—</strong></div><div><span>Fare</span><strong id="totalText">—</strong></div></div><div class="status-track"><div class="status-step active" data-status-step="Searching Driver">Searching</div><div class="status-step" data-status-step="Driver Arriving">Driver</div><div class="status-step" data-status-step="On the way">On the way</div><div class="status-step" data-status-step="Completed">Completed</div></div></div>
+<button class="cta" id="estimateBtn" type="button">See Cars &amp; Fares</button><div id="carList" class="hidden"></div><div id="formMsg" class="hint hidden"></div><div id="fareBox" class="fare hidden"><h4>Fare estimate</h4><div class="fare-row"><span id="fareLabel">—</span><span id="fareAmount">—</span></div><div class="fare-row"><span>Distance</span><span id="fareDistance">—</span></div><div class="fare-row"><span>Advance</span><span id="fareAdvance">—</span></div><div class="fare-row"><span>Advance %</span><span id="advPctLabel">—</span></div><input id="advSlider" type="range" min="15" max="100" step="5" value="15" aria-label="Advance payment percentage" style="width:100%;accent-color:#ffc400;margin:4px 0"><div class="hint" id="advHint">Pay more now, less in cash!</div><div class="fare-row"><span>Balance to pay driver</span><span id="fareBalance">—</span></div></div>
+<div id="customerBlock" class="auth-card hidden"><h3 style="margin:0 0 8px">Confirm your booking</h3><div class="form-grid"><div class="field"><label>Your name</label><input id="customerName" placeholder="Full name"></div><div class="field"><label>Phone</label><input id="customerPhone" inputmode="tel" maxlength="10" placeholder="10-digit mobile number"></div><div class="field"><label>Email (optional)</label><input id="customerEmail" type="email"></div><div class="field"><label>Coupon (optional)</label><input id="couponCode" placeholder="Promo code"></div></div></div>
+<div id="paymentBlock" class="auth-card hidden"><h3 style="margin:0 0 6px">Pay advance to confirm</h3><p class="small">Secure Razorpay payment. Your booking is confirmed only after the payment is verified.</p><button class="cta" id="payBtn" type="button">Pay Advance</button><div id="paymentStatus" class="small" style="margin-top:8px"></div></div>
+<div id="statusCard" class="status-card hidden"><span class="status-pill" id="statusPill">Searching Driver</span><h3 id="statusTitle">Your booking is confirmed</h3><p style="color:#cfd2d8;font-size:13px;line-height:1.6;margin:0 0 6px">Thank you for booking with Taximela. Your payment has been received and we are arranging your driver. Driver details will be shared with you shortly. Please save your Booking ID &mdash; you can check the status anytime under <a href="track.html" style="color:#ffcc00;font-weight:800">My Bookings</a>.</p><div class="booking-summary"><div><span>Booking ID</span><strong id="bookingIdText">—</strong></div><div><span>Route</span><strong id="routeText">—</strong></div><div><span>Cab</span><strong id="cabText">—</strong></div><div><span>Fare</span><strong id="totalText">—</strong></div></div><div class="status-track"><div class="status-step active" data-status-step="Searching Driver">Searching</div><div class="status-step" data-status-step="Driver Arriving">Driver</div><div class="status-step" data-status-step="On the way">On the way</div><div class="status-step" data-status-step="Completed">Completed</div></div></div>
 </div></div></div>
     </section>
 
@@ -152,21 +152,77 @@
       </div>
     </section>
 
-    <section class="tm-features">
-      <div class="tm-features-inner">
-        <div class="tm-feature"><div class="tm-feature-icon">✓</div><div><b>Safe Rides</b><small>Your safety is our priority</small></div></div>
-        <div class="tm-feature"><div class="tm-feature-icon">◷</div><div><b>On-Time Pickup</b><small>Always on schedule</small></div></div>
-        <div class="tm-feature"><div class="tm-feature-icon">₹</div><div><b>Best Prices</b><small>Transparent &amp; fair rates</small></div></div>
-        <div class="tm-feature"><div class="tm-feature-icon">♧</div><div><b>24/7 Support</b><small>We're always here</small></div></div>
+    <section class="tmx-why">
+      <div class="tmx-wrap">
+        <h2>Intercity rides, priced honestly.</h2>
+        <ul class="tmx-why-list">
+          <li><span class="tmx-tick" aria-hidden="true">&#10003;</span><div><b>One way means one way</b><p>Going to Agra and staying there? You pay for the trip you take, not for an empty drive back.</p></div></li>
+          <li><span class="tmx-tick" aria-hidden="true">&#8377;</span><div><b>Toll and state tax, stated upfront</b><p>Every fare shows whether toll and state tax are included. Parking is paid by the customer.</p></div></li>
+          <li><span class="tmx-tick" aria-hidden="true">&#9733;</span><div><b>Drivers our team has reviewed</b><p>Drivers join Taximela after we check their details, so the person who picks you up is someone we know.</p></div></li>
+          <li><span class="tmx-tick" aria-hidden="true">&#9202;</span><div><b>A small advance, the rest in person</b><p>Pay part of the fare online to confirm your cab and the rest to the driver. Pay more now if you want to carry less cash.</p></div></li>
+        </ul>
       </div>
     </section>
+
+    <section class="tmx-road" id="how">
+      <div class="tmx-wrap">
+        <h2>Booked in four stops</h2>
+        <p class="tmx-lead">No app download and no login needed to book on the website.</p>
+        <div class="tmx-steps">
+          <div class="tmx-step"><div class="tmx-stone">1</div><h3>Pick your route</h3><p>Enter pickup and destination, then your mobile number.</p></div>
+          <div class="tmx-step"><div class="tmx-stone">2</div><h3>Compare cars</h3><p>See every car with the fare for your exact distance.</p></div>
+          <div class="tmx-step"><div class="tmx-stone">3</div><h3>Pay a small advance</h3><p>Secure online payment confirms your booking.</p></div>
+          <div class="tmx-step"><div class="tmx-stone">4</div><h3>Meet your driver</h3><p>We share your driver&rsquo;s name, number and car details.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tmx-services">
+      <div class="tmx-wrap">
+        <h2>One ride for every kind of trip</h2>
+        <div class="tmx-svc">
+          <article><h3>Outstation</h3><p>One way or round trip to any city. Add stops along the way and see the fare change before you pay.</p></article>
+          <article><h3>Local rental</h3><p>Book a car by the package: 20, 40, 80 or 120 km. Add extra hours if your plans run long.</p></article>
+          <article><h3>Airport transfer</h3><p>Airport pickups and drops with the fare shown up front, so there is nothing to bargain over at the kerb.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="tmx-routes">
+      <div class="tmx-wrap">
+        <h2>Popular routes</h2>
+        <p class="tmx-lead">Tap a route to start your booking. You can change anything on the next screen.</p>
+        <div class="tmx-chips">
+          <a class="tmx-chip" href="book.html?pickup=Delhi&amp;destination=Agra">Delhi to Agra</a>
+          <a class="tmx-chip" href="book.html?pickup=Delhi&amp;destination=Jaipur">Delhi to Jaipur</a>
+          <a class="tmx-chip" href="book.html?pickup=Delhi&amp;destination=Haridwar">Delhi to Haridwar</a>
+          <a class="tmx-chip" href="book.html?pickup=Delhi&amp;destination=Chandigarh">Delhi to Chandigarh</a>
+          <a class="tmx-chip" href="book.html?pickup=Indore&amp;destination=Bhopal">Indore to Bhopal</a>
+          <a class="tmx-chip" href="book.html?pickup=Indore&amp;destination=Ujjain">Indore to Ujjain</a>
+          <a class="tmx-chip" href="book.html?pickup=Mumbai&amp;destination=Pune">Mumbai to Pune</a>
+          <a class="tmx-chip" href="book.html?pickup=Ahmedabad&amp;destination=Vadodara">Ahmedabad to Vadodara</a>
+          <a class="tmx-chip" href="book.html?pickup=Jaipur&amp;destination=Udaipur">Jaipur to Udaipur</a>
+          <a class="tmx-chip" href="book.html?pickup=Lucknow&amp;destination=Agra">Lucknow to Agra</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="tmx-faq">
+      <div class="tmx-wrap">
+        <h2>Questions, answered</h2>
+        <div class="tmx-faq-list">
+          <details><summary>How much do I pay to book?</summary><p>A minimum advance, shown on every car, confirms your booking. You can pay more now and pay less to the driver.</p></details>
+          <details><summary>Is toll included in the fare?</summary><p>For outstation trips you choose toll and state tax included or excluded before you pay. Local rental fares exclude toll and state tax. Parking is always paid by the customer.</p></details>
+          <details><summary>How do I get my driver&rsquo;s details?</summary><p>Once a driver accepts your trip, we share the driver&rsquo;s name, phone number and car details on your mobile number. Make sure your WhatsApp number is correct when you book.</p></details>
+          <details><summary>Can I cancel a booking?</summary><p>Yes. Our <a href="policies.html?type=refund">Refund &amp; Cancellation policy</a> explains how refunds work.</p></details>
+          <details><summary>Do you offer local and airport rides?</summary><p>Yes. Choose Local / Airport on the booking card to book a local rental package or an airport transfer.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <section class="tmx-driver"><div class="tmx-wrap"><div><h2>Own a cab? Drive with Taximela.</h2><p>Get ride requests near you, keep your trips and earnings in one app, and top up your wallet whenever you need.</p></div><a class="tmx-btn" href="driver.html">Become a driver partner</a></div></section>
   </main>
 
-  <footer class="footer">
-    <div class="footer-inner">
-      <div><a class="brand" href="index.html"><img class="logo" src="assets/logo-v2.png" alt="Taxi Mela logo"><span style="color:#fff">TAXIMELA</span></a><p>Premium rides. Clear booking.</p></div>
-      <div class="footer-links" style="display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px"><a href="driver.html">Become a Driver Partner</a><a href="policies.html?type=terms">Terms &amp; Conditions</a><a href="policies.html?type=privacy">Privacy Policy</a><a href="policies.html?type=refund">Refund &amp; Cancellation</a><a href="policies.html?type=driver">Driver Agreement</a></div><div>© 2026 Taxi Mela · v3</div>
-    </div>
-  </footer>
+  <footer class="footer"><div class="footer-inner"><div><a class="brand" href="index.html"><img class="logo" src="assets/logo-v2.png" alt="Taximela logo"><span style="color:#fff">TAXIMELA</span></a><p>Clear fares. Reliable rides, one way or round trip.</p></div><div class="footer-links" style="display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px"><a href="contact.html">Contact</a><a href="driver.html">Become a Driver Partner</a><a href="policies.html?type=terms">Terms &amp; Conditions</a><a href="policies.html?type=privacy">Privacy Policy</a><a href="policies.html?type=refund">Refund &amp; Cancellation</a><a href="policies.html?type=driver">Driver Agreement</a></div><div>&copy; 2026 Taximela</div></div></footer>
 <div id="toast" class="toast"></div></body>
 </html>
