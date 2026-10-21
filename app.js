@@ -477,11 +477,14 @@ function bindPlaceInput(el, kind){
   el.removeAttribute('list');el.setAttribute('autocomplete','off');
   loadGoogleMaps().then(maps=>{
     if(!maps.places)return;
-    const ac=new maps.places.Autocomplete(el,{types:kind==='airport'?['airport']:['(cities)'],componentRestrictions:{country:'in'},fields:['geometry','name','formatted_address']});
+    const acOpts={componentRestrictions:{country:'in'},fields:['geometry','name','formatted_address','types']};
+    if(kind==='airport')acOpts.types=['airport'];
+    const ac=new maps.places.Autocomplete(el,acOpts);
     ac.addListener('place_changed',()=>{
       const pl=ac.getPlace();const loc=pl&&pl.geometry&&pl.geometry.location;
       if(!loc)return;
-      const nm=pl.name||el.value;
+      const isCity=(pl.types||[]).some(t=>['locality','administrative_area_level_1','administrative_area_level_2','airport'].includes(t));
+      const nm=kind==='airport'||isCity?(pl.name||el.value):String(pl.formatted_address||pl.name||el.value).replace(/,\s*India$/,'');
       el.value=nm;
       placeCache[String(nm).trim().toLowerCase()]={lat:loc.lat(),lng:loc.lng(),name:nm};
       hideCars();
