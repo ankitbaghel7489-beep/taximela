@@ -255,11 +255,11 @@ function initTrack() {
       const driver = a.driver || r.driver; const hasDriver = driver && driver !== 'Not Assigned';
       const dphone = String(a.driverPhone || r.driverPhone || '').replace(/\D/g, '').slice(-10);
       const vehicle = a.assignedVehicle || a.cabType || '';
-      const total = Number(r.amount || 0), paid = Number(r.advancePaid || 0);
+      const total = Number(r.amount || 0), paid = Number(a.advancePaid ?? r.advancePaid ?? 0), disc = Number(a.couponDiscount ?? r.couponDiscount ?? 0);
       return `<div class="feature" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><b style="margin:0">${esc(r.id)}</b><span style="background:#ffcc00;color:#111;font-weight:900;font-size:12px;padding:6px 11px;border-radius:999px">${esc(STATUS_TEXT[st] || st)}</span></div>
       <p style="margin-top:10px"><b style="display:inline;font-size:14px">${esc(r.from || '')}${r.to && r.to !== r.from ? ' → ' + esc(r.to) : ''}</b></p>
       <p style="margin-top:6px">${esc(r.date || '')}${a.pickupTime ? ' · ' + esc(a.pickupTime) : ''}${vehicle ? ' · ' + esc(vehicle) : ''}</p>
-      <p style="margin-top:6px">Total fare ${money(total)} · Advance paid ${money(paid)} · Balance to pay driver ${money(Math.max(0, total - paid))}</p>
+      <p style="margin-top:6px">Total fare ${money(total)} · Advance paid ${money(paid)}${disc > 0 ? ` (coupon saved ${money(disc)})` : ''} · Balance to pay driver ${money(Math.max(0, total - paid - disc))}</p>
       <p style="margin-top:10px;color:#111">${hasDriver ? `<b style="display:inline">Driver:</b> ${esc(driver)}${dphone ? ` · <a href="tel:+91${dphone}" style="font-weight:800">+91 ${dphone}</a>` : ''}` : (st === 'Cancelled' ? 'This booking was cancelled.' : 'Thank you for booking with Taxi Mela. We are arranging your driver and will share the details here shortly.')}</p></div>`;
     }).join('');
   }
