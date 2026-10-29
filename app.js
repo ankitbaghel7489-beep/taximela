@@ -435,7 +435,7 @@ async function pay(){
         try{
           const res=await createWebsiteBookingFn({...info,orderId:response.razorpay_order_id||orderId,paymentId,signature:response.razorpay_signature||response.signature});
           const b=res.data||{};
-          showStatus({bookingId:b.bookingId,from:ep.from,to:ep.to,cab,total:b.totalFare??currentFare.totalFare,phone});
+          showStatus({bookingId:b.bookingId,from:ep.from,to:ep.to,cab,total:b.totalFare??currentFare.totalFare,phone,paid:payState.paid,discount:payState.discount,advanceFull:currentFare.advance});
           toast('Booking confirmed successfully.');
         }catch(e){
           console.error(e);
@@ -450,6 +450,10 @@ function showStatus(b){
   ['#carList','#fareBox','#paymentBlock'].forEach(s=>$(s)?.classList.add('hidden'));
   $('#statusCard').classList.remove('hidden');
   $('#bookingIdText').textContent=b.bookingId;$('#routeText').textContent=`${b.from} → ${b.to}`;$('#cabText').textContent=b.cab;$('#totalText').textContent=money(b.total);
+  if(b.paid!=null&&$('#paidText')&&$('#dueText')){
+    $('#paidText').textContent=money(b.paid)+(b.discount>0?` (coupon saved ${money(b.discount)})`:'');
+    $('#dueText').textContent=money(Math.max(0,b.total-(b.advanceFull??(b.paid+(b.discount||0)))));
+  }
   pollStatus(b.bookingId,b.phone);
   $('#statusCard').scrollIntoView({behavior:'smooth',block:'center'});
 }
